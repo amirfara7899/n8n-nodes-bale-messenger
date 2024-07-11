@@ -3,10 +3,10 @@ import {
 	INodeType,
 	INodeTypeDescription,
 	IDataObject,
-	NodeOperationError,
+	// NodeOperationError,
 } from 'n8n-workflow';
-import { BINARY_ENCODING, IExecuteFunctions } from 'n8n-core';
-import { default as TelegramBot } from 'node-telegram-bot-api';
+import {BINARY_ENCODING, IExecuteFunctions} from 'n8n-core';
+import {default as TelegramBot} from 'node-telegram-bot-api';
 
 function getMarkup(this: IExecuteFunctions, i: number) {
 	const replyMarkupOption = this.getNodeParameter('replyMarkup', i) as string;
@@ -74,6 +74,10 @@ export class BaleMessenger implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				options: [
+					{
+						name: 'Bot',
+						value: 'bot'
+					},
 					{
 						name: 'Message',
 						value: 'message',
