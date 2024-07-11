@@ -93,6 +93,39 @@ export class BaleMessenger implements INodeType {
 				noDataExpression: true,
 				displayOptions: {
 					show: {
+						resource: ['bot'],
+					},
+				},
+				options: [
+					{
+						name: 'Get Me',
+						value: 'getMe',
+						description: 'A simple method for testing your bots auth token',
+						action: 'Test bot auth token',
+					},
+					{
+						name: 'Log Out',
+						value: 'logOut',
+						description: 'Log out from the cloud Bot API server before launching the bot locally',
+						action: 'Log out from the cloud bot api',
+					},
+					{
+						name: 'Close',
+						value: 'close',
+						description: 'Close the bot instance before moving it from one local server to another',
+						action: 'Close the bot instance',
+					},
+				],
+				default: 'getMe'
+			},
+
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
 						resource: ['message'],
 					},
 				},
