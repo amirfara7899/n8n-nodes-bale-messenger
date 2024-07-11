@@ -647,6 +647,7 @@ export class BaleMessenger implements INodeType {
 		const items = this.getInputData();
 		const returnData: INodeExecutionData[] = [];
 		const operation = this.getNodeParameter('operation', 0);
+		const resource = this.getNodeParameter('resource', 0);
 		const credentials = await this.getCredentials('baleMessengerApi');
 		const binaryData = this.getNodeParameter('binaryData', 0, false);
 
@@ -659,119 +660,153 @@ export class BaleMessenger implements INodeType {
 		for (let i = 0; i < items.length; i++) {
 			body = {};
 
-			const chatId = this.getNodeParameter('chatId', i) as string;
+			if (resource === 'bot') {
 
-			if (operation === 'sendMessage') {
-				try {
-					const text = this.getNodeParameter('text', i) as string;
+				if (operation === 'getMe'){
+					const res = await bot.getMe();
+					returnData.push({
+						json: {
+							...res
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				}
+				else if (operation === 'logOut'){
+					const res = await bot.logOut();
+					returnData.push({
+						json: {
+							logged_out: res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				}
+				else if (operation === 'close') {
+					const res = await bot.close();
+					returnData.push({
+						json: {
+							closed: res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				}
+			}
+			else if (resource === 'message') {
+				const chatId = this.getNodeParameter('chatId', i) as string;
 
-					const res = await bot.sendMessage(chatId, text, {
+				if (operation === 'sendMessage') {
+					try {
+						const text = this.getNodeParameter('text', i) as string;
+
+						const res = await bot.sendMessage(chatId, text, {
+							reply_markup: getMarkup.call(this, i),
+						});
+						returnData.push({
+							json: {
+								...res,
+							},
+							binary: {},
+							pairedItem: {item: i},
+						});
+
+					} catch (err) {
+
+						//throw new NodeOperationError(this.getNode(), `bad request - chat not found`);
+					}
+				} else if (operation === 'editMessageText') {
+					const messageType = this.getNodeParameter('messageType', i) as string;
+					let chat_id;
+					let message_id;
+					let Text;
+					if (messageType === 'inlineMessage') {
+						body.inline_message_id = this.getNodeParameter('inlineMessageId', i) as string;
+					} else {
+						chat_id = this.getNodeParameter('chatId', i) as string;
+						message_id = this.getNodeParameter('messageId', i) as number;
+						// reply_markup = this.getNodeParameter('replyMarkup', i) as InlineKeyboardMarkup;
+					}
+
+					body.text = this.getNodeParameter('text', i) as string;
+					Text = body.text;
+
+					bot.editMessageText(body.text, {
+						chat_id: chat_id,
+						message_id: message_id,
 						reply_markup: getMarkup.call(this, i),
 					});
+
+					returnData.push({
+						json: {
+							Text,
+							chat_id,
+							message_id,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+
+					// Add additional fields and replyMarkup
+					// addAdditionalFields.call(this, body, i);
+				}
+
+				if (operation === 'sendSticker') {
+					const stickerId = this.getNodeParameter('stickerId', i) as string;
+					const replyToMessageId = this.getNodeParameter('replyToMessageId', i) as number;
+
+					const res = await bot.sendSticker(chatId, stickerId, {
+						reply_to_message_id: replyToMessageId,
+					});
+
 					returnData.push({
 						json: {
 							...res,
 						},
 						binary: {},
-						pairedItem: { item: i },
+						pairedItem: {item: i},
 					});
-
-				}catch(err){
-
-					//throw new NodeOperationError(this.getNode(), `bad request - chat not found`);
-				}
-			} else if (operation === 'editMessageText') {
-				const messageType = this.getNodeParameter('messageType', i) as string;
-				let chat_id;
-				let message_id;
-				let Text;
-				if (messageType === 'inlineMessage') {
-					body.inline_message_id = this.getNodeParameter('inlineMessageId', i) as string;
-				} else {
-					chat_id = this.getNodeParameter('chatId', i) as string;
-					message_id = this.getNodeParameter('messageId', i) as number;
-					// reply_markup = this.getNodeParameter('replyMarkup', i) as InlineKeyboardMarkup;
 				}
 
-				body.text = this.getNodeParameter('text', i) as string;
-				Text = body.text;
+				if (operation === 'deleteMessage') {
+					const messageId = this.getNodeParameter('messageId', i) as number;
 
-				bot.editMessageText(body.text, {
-					chat_id: chat_id,
-					message_id: message_id,
-					reply_markup: getMarkup.call(this, i),
-				});
+					await bot.deleteMessage(chatId, messageId);
 
-				returnData.push({
-					json: {
-						Text,
-						chat_id,
-						message_id,
-					},
-					binary: {},
-					pairedItem: { item: i },
-				});
-
-				// Add additional fields and replyMarkup
-				// addAdditionalFields.call(this, body, i);
-			}
-
-			if (operation === 'sendSticker') {
-				const stickerId = this.getNodeParameter('stickerId', i) as string;
-				const replyToMessageId = this.getNodeParameter('replyToMessageId', i) as number;
-
-				const res = await bot.sendSticker(chatId, stickerId, {
-					reply_to_message_id: replyToMessageId,
-				});
-
-				returnData.push({
-					json: {
-						...res,
-					},
-					binary: {},
-					pairedItem: { item: i },
-				});
-			}
-
-			if (operation === 'deleteMessage') {
-				const messageId = this.getNodeParameter('messageId', i) as number;
-
-				await bot.deleteMessage(chatId, messageId);
-
-				returnData.push({
-					json: {
-						messageDeleted: true,
-					},
-					binary: {},
-					pairedItem: { item: i },
-				});
-			}
-
-			if (['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo'].includes(operation)) {
-				let fileOptions = undefined;
-				let uploadData = undefined;
-				const options = { reply_markup: getMarkup.call(this, i) };
-				if (binaryData) {
-					const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
-					const itemBinaryData = items[i].binary![binaryPropertyName];
-					uploadData = Buffer.from(itemBinaryData.data, BINARY_ENCODING);
-					fileOptions = { filename: itemBinaryData.fileName };
-				} else {
-					// file_id passed
-					uploadData = this.getNodeParameter('fileId', 0) as string;
+					returnData.push({
+						json: {
+							messageDeleted: true,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
 				}
 
-				if (operation === 'sendDocument')
-					await bot.sendDocument(chatId, uploadData, options, fileOptions);
-				else if (operation === 'sendPhoto')
-					await bot.sendPhoto(chatId, uploadData, options, fileOptions);
-				else if (operation === 'sendAudio')
-					await bot.sendAudio(chatId, uploadData, options, fileOptions);
-				else if (operation === 'sendVideo')
-					await bot.sendVideo(chatId, uploadData, options, fileOptions);
+				if (['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo'].includes(operation)) {
+					let fileOptions = undefined;
+					let uploadData = undefined;
+					const options = {reply_markup: getMarkup.call(this, i)};
+					if (binaryData) {
+						const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
+						const itemBinaryData = items[i].binary![binaryPropertyName];
+						uploadData = Buffer.from(itemBinaryData.data, BINARY_ENCODING);
+						fileOptions = {filename: itemBinaryData.fileName};
+					} else {
+						// file_id passed
+						uploadData = this.getNodeParameter('fileId', 0) as string;
+					}
+
+					if (operation === 'sendDocument')
+						await bot.sendDocument(chatId, uploadData, options, fileOptions);
+					else if (operation === 'sendPhoto')
+						await bot.sendPhoto(chatId, uploadData, options, fileOptions);
+					else if (operation === 'sendAudio')
+						await bot.sendAudio(chatId, uploadData, options, fileOptions);
+					else if (operation === 'sendVideo')
+						await bot.sendVideo(chatId, uploadData, options, fileOptions);
+				}
 			}
 		}
-
 		return this.prepareOutputData(returnData);
 	}
 }
