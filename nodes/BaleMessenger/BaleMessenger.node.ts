@@ -184,6 +184,24 @@ export class BaleMessenger implements INodeType {
 						description: 'Send a video',
 						action: 'Send a video',
 					},
+					{
+						name: 'Send Animation',
+						value: 'sendAnimation',
+						description: 'Send an animated file',
+						action: 'Send an animated file',
+					},
+					{
+						name: 'Send Location',
+						value: 'sendLocation',
+						description: 'Send a location',
+						action: 'Send a location',
+					},
+					{
+						name: 'Send Media Group',
+						value: 'sendMediaGroup',
+						description: 'Send group of photos or videos to album',
+						action: 'Send a media group message',
+					},
 				],
 				default: 'sendMessage',
 			},
@@ -259,6 +277,7 @@ export class BaleMessenger implements INodeType {
 							'deleteMessage',
 							'sendChatAction',
 							'editMessageText',
+							'sendLocation',
 						],
 						resource: ['chat', 'message'],
 					},
@@ -341,6 +360,7 @@ export class BaleMessenger implements INodeType {
 							'sendAudio',
 							'sendVideo',
 							'editMessageText',
+							'sendLocation',
 						],
 						resource: ['message'],
 					},
@@ -640,6 +660,65 @@ export class BaleMessenger implements INodeType {
 					'Type of action to broadcast. Choose one, depending on what the user is about to receive. The status is set for 5 seconds or less (when a message arrives from your bot).',
 			},
 			// amir nezami changes ends here \\
+
+			// ----------------------------------
+			//         message:sendLocation
+			// ----------------------------------
+			{
+				displayName: 'Latitude',
+				name: 'latitude',
+				type: 'number',
+				default: 0.0,
+				typeOptions: {
+					numberPrecision: 10,
+					minValue: -90,
+					maxValue: 90,
+				},
+				displayOptions: {
+					show: {
+						operation: ['sendLocation'],
+						resource: ['message'],
+					},
+				},
+				description: 'Location latitude',
+			},
+			{
+				displayName: 'Longitude',
+				name: 'longitude',
+				type: 'number',
+				typeOptions: {
+					numberPrecision: 10,
+					minValue: -180,
+					maxValue: 180,
+				},
+				default: 0.0,
+				displayOptions: {
+					show: {
+						operation: ['sendLocation'],
+						resource: ['message'],
+					},
+				},
+				description: 'Location longitude',
+			},
+			{
+				displayName: 'Horizontal Accuracy',
+				name: 'horizontal_accuracy',
+				type: 'number',
+				typeOptions: {
+					numberPrecision: 10,
+					minValue: 0,
+					maxValue: 1500,
+				},
+				default: 0.0,
+				displayOptions: {
+					show: {
+						operation: ['sendLocation'],
+						resource: ['message'],
+					},
+				},
+				description: 'Location horizontal accuracy',
+			},
+
 		],
 	};
 
@@ -662,7 +741,7 @@ export class BaleMessenger implements INodeType {
 
 			if (resource === 'bot') {
 
-				if (operation === 'getMe'){
+				if (operation === 'getMe') {
 					const res = await bot.getMe();
 					returnData.push({
 						json: {
@@ -671,8 +750,7 @@ export class BaleMessenger implements INodeType {
 						binary: {},
 						pairedItem: {item: i},
 					});
-				}
-				else if (operation === 'logOut'){
+				} else if (operation === 'logOut') {
 					const res = await bot.logOut();
 					returnData.push({
 						json: {
@@ -681,8 +759,7 @@ export class BaleMessenger implements INodeType {
 						binary: {},
 						pairedItem: {item: i},
 					});
-				}
-				else if (operation === 'close') {
+				} else if (operation === 'close') {
 					const res = await bot.close();
 					returnData.push({
 						json: {
@@ -692,8 +769,7 @@ export class BaleMessenger implements INodeType {
 						pairedItem: {item: i},
 					});
 				}
-			}
-			else if (resource === 'message') {
+			} else if (resource === 'message') {
 				const chatId = this.getNodeParameter('chatId', i) as string;
 
 				if (operation === 'sendMessage') {
@@ -804,6 +880,22 @@ export class BaleMessenger implements INodeType {
 						await bot.sendAudio(chatId, uploadData, options, fileOptions);
 					else if (operation === 'sendVideo')
 						await bot.sendVideo(chatId, uploadData, options, fileOptions);
+				}
+
+				if (operation === 'sendLocation') {
+					const latitude = this.getNodeParameter('latitude', i) as number;
+					const longitude = this.getNodeParameter('longitude', i) as number;
+					const horizontal_accuracy = this.getNodeParameter('horizontal_accuracy', i) as number;
+					const res = await bot.sendLocation(chatId, latitude, longitude,{
+						horizontal_accuracy: horizontal_accuracy,
+					})
+					returnData.push({
+						json: {
+							...res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
 				}
 			}
 		}
