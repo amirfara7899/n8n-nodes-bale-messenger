@@ -6,7 +6,7 @@ import {
 	// NodeOperationError,
 } from 'n8n-workflow';
 import {BINARY_ENCODING, IExecuteFunctions} from 'n8n-core';
-import {default as TelegramBot} from 'node-telegram-bot-api';
+import {default as TelegramBot, InlineQueryResult} from 'node-telegram-bot-api';
 
 function getMarkup(this: IExecuteFunctions, i: number) {
 	const replyMarkupOption = this.getNodeParameter('replyMarkup', i) as string;
@@ -81,6 +81,10 @@ export class BaleMessenger implements INodeType {
 					{
 						name: 'Message',
 						value: 'message',
+					},
+					{
+						name: 'Callback',
+						value: 'callback',
 					},
 				],
 				default: 'message',
@@ -204,6 +208,33 @@ export class BaleMessenger implements INodeType {
 					},
 				],
 				default: 'sendMessage',
+			},
+
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['callback'],
+					},
+				},
+				options: [
+					{
+						name: 'Answer Query',
+						value: 'answerQuery',
+						description: 'Send answer to callback query sent from inline keyboard',
+						action: 'Answer Query a callback',
+					},
+					{
+						name: 'Answer Inline Query',
+						value: 'answerInlineQuery',
+						description: 'Send answer to callback query sent from inline bot',
+						action: 'Answer an inline query callback',
+					},
+				],
+				default: 'answerQuery',
 			},
 
 			// edit message
@@ -719,6 +750,154 @@ export class BaleMessenger implements INodeType {
 				description: 'Location horizontal accuracy',
 			},
 
+			// ----------------------------------
+			//         callback:answerQuery
+			// ----------------------------------
+			{
+				displayName: 'Query ID',
+				name: 'queryId',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['answerQuery'],
+						resource: ['callback'],
+					},
+				},
+				required: true,
+				description: 'Unique identifier for the query to be answered',
+			},
+
+			{
+				displayName: 'Additional Fields',
+				name: 'additionalFields',
+				type: 'collection',
+				placeholder: 'Add Field',
+				displayOptions: {
+					show: {
+						operation: ['answerQuery'],
+						resource: ['callback'],
+					},
+				},
+				default: {},
+				options: [
+					{
+						displayName: 'Cache Time',
+						name: 'cache_time',
+						type: 'number',
+						typeOptions: {
+							minValue: 0,
+						},
+						default: 0,
+						description:
+							'The maximum amount of time in seconds that the result of the callback query may be cached client-side',
+					},
+					{
+						displayName: 'Show Alert',
+						name: 'show_alert',
+						type: 'boolean',
+						default: false,
+						description:
+							'Whether an alert will be shown by the client instead of a notification at the top of the chat screen',
+					},
+					{
+						displayName: 'Text',
+						name: 'text',
+						type: 'string',
+						default: '',
+						description:
+							'Text of the notification. If not specified, nothing will be shown to the user, 0-200 characters.',
+					},
+					{
+						displayName: 'URL',
+						name: 'url',
+						type: 'string',
+						default: '',
+						description: "URL that will be opened by the user's client",
+					},
+				],
+			},
+
+			// -----------------------------------------------
+			//         callback:answerInlineQuery
+			// -----------------------------------------------
+			{
+				displayName: 'Query ID',
+				name: 'queryId',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['answerInlineQuery'],
+						resource: ['callback'],
+					},
+				},
+				required: true,
+				description: 'Unique identifier for the answered query',
+			},
+			{
+				displayName: 'Results',
+				name: 'results',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['answerInlineQuery'],
+						resource: ['callback'],
+					},
+				},
+				required: true,
+				description: 'A JSON-serialized array of results for the inline query',
+			},
+			{
+				displayName: 'Additional Fields',
+				name: 'additionalFields',
+				type: 'collection',
+				placeholder: 'Add Field',
+				displayOptions: {
+					show: {
+						operation: ['answerInlineQuery'],
+						resource: ['callback'],
+					},
+				},
+				default: {},
+				options: [
+					{
+						displayName: 'Cache Time',
+						name: 'cache_time',
+						type: 'number',
+						typeOptions: {
+							minValue: 0,
+						},
+						default: 0,
+						description:
+							'The maximum amount of time in seconds that the result of the callback query may be cached client-side',
+					},
+					{
+						displayName: 'Show Alert',
+						name: 'show_alert',
+						type: 'boolean',
+						default: false,
+						description:
+							'Whether an alert will be shown by the client instead of a notification at the top of the chat screen',
+					},
+					{
+						displayName: 'Text',
+						name: 'text',
+						type: 'string',
+						default: '',
+						description:
+							'Text of the notification. If not specified, nothing will be shown to the user, 0-200 characters.',
+					},
+					{
+						displayName: 'URL',
+						name: 'url',
+						type: 'string',
+						default: '',
+						description: "URL that will be opened by the user's client",
+					},
+				],
+			},
 		],
 	};
 
@@ -764,6 +943,43 @@ export class BaleMessenger implements INodeType {
 					returnData.push({
 						json: {
 							closed: res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				}
+			} else if (resource === 'callback') {
+				if (operation === 'answerQuery') {
+					// ----------------------------------
+					//         callback:answerQuery
+					// ----------------------------------
+
+					const query_id = this.getNodeParameter('queryId', i) as string;
+
+					// Add additional fields
+					const additionalFields = this.getNodeParameter('additionalFields', i);
+					const res = await bot.answerCallbackQuery(query_id, additionalFields);
+					returnData.push({
+						json: {
+							successful: res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				} else if (operation === 'answerInlineQuery') {
+					// -----------------------------------------------
+					//         callback:answerInlineQuery
+					// -----------------------------------------------
+
+					const query_id = this.getNodeParameter('queryId', i) as string;
+					const results = this.getNodeParameter('results', i) as InlineQueryResult[];
+
+					// Add additional fields
+					const additionalFields = this.getNodeParameter('additionalFields', i);
+					const res = await bot.answerInlineQuery(query_id, results, additionalFields);
+					returnData.push({
+						json: {
+							successful: res,
 						},
 						binary: {},
 						pairedItem: {item: i},
@@ -886,7 +1102,7 @@ export class BaleMessenger implements INodeType {
 					const latitude = this.getNodeParameter('latitude', i) as number;
 					const longitude = this.getNodeParameter('longitude', i) as number;
 					const horizontal_accuracy = this.getNodeParameter('horizontal_accuracy', i) as number;
-					const res = await bot.sendLocation(chatId, latitude, longitude,{
+					const res = await bot.sendLocation(chatId, latitude, longitude, {
 						horizontal_accuracy: horizontal_accuracy,
 					})
 					returnData.push({
