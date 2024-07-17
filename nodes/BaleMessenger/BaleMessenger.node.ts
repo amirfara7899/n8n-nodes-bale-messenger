@@ -2,9 +2,10 @@ import {
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
-	IDataObject,
+	IDataObject, NodeOperationError,
 	// NodeOperationError,
 } from 'n8n-workflow';
+import axios from 'axios';
 import {BINARY_ENCODING, IExecuteFunctions} from 'n8n-core';
 import {default as TelegramBot, InlineQueryResult} from 'node-telegram-bot-api';
 
@@ -47,6 +48,31 @@ function getMarkup(this: IExecuteFunctions, i: number) {
 	}
 
 	return reply_markup;
+}
+
+async function sendContact(token: string, chat_id: string, phone_number: string, first_name: string,
+													 last_name?: string, replyToMessageId?: number, reply_markup?: any) {
+	const data: Record<string, any> = {
+		chat_id: chat_id,
+		phone_number: phone_number,
+		first_name: first_name,
+		last_name: last_name,
+		replyToMessageId: replyToMessageId,
+		reply_markup: reply_markup
+	};
+	const url = `${BALE_API_URL}${token}/sendContact`;
+	try {
+		const response = await axios.post(url, data, {
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		});
+		console.log('Response from Bale:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Failed to send contact:', error.response ? error.response.data : error.message);
+		throw error;
+	}
 }
 
 export class BaleMessenger implements INodeType {
@@ -208,6 +234,12 @@ export class BaleMessenger implements INodeType {
 						description: 'Send group of photos or videos to album',
 						action: 'Send a media group message',
 					},
+					{
+						name: 'Send Contact',
+						value: 'sendContact',
+						description: 'Send a contact',
+						action: 'Send a contact',
+					},
 				],
 				default: 'sendMessage',
 			},
@@ -311,6 +343,7 @@ export class BaleMessenger implements INodeType {
 							'sendChatAction',
 							'editMessageText',
 							'sendLocation',
+							'sendContact',
 						],
 						resource: ['chat', 'message'],
 					},
@@ -394,6 +427,7 @@ export class BaleMessenger implements INodeType {
 							'sendVideo',
 							'editMessageText',
 							'sendLocation',
+							'sendContact',
 						],
 						resource: ['message'],
 					},
@@ -591,6 +625,7 @@ export class BaleMessenger implements INodeType {
 							'sendAudio',
 							'sendVideo',
 							'sendSticker',
+							'sendContact',
 						],
 						resource: ['chat', 'message'],
 					},
@@ -693,6 +728,53 @@ export class BaleMessenger implements INodeType {
 					'Type of action to broadcast. Choose one, depending on what the user is about to receive. The status is set for 5 seconds or less (when a message arrives from your bot).',
 			},
 			// amir nezami changes ends here \\
+
+			// ----------------------------------
+			//         message:sendContact
+			// ----------------------------------
+			{
+				displayName: 'phone_number',
+				name: 'phone_number',
+				type: 'string',
+				required: true,
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['sendContact'],
+						resource: ['message'],
+					},
+				},
+				placeholder: '+989123456789',
+				description: 'Phone number of the contact to be sent',
+			},
+
+			{
+				displayName: 'first_name',
+				name: 'first_name',
+				type: 'string',
+				required: true,
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['sendContact'],
+						resource: ['message'],
+					},
+				},
+				description: 'First name of the contact to be sent',
+			},
+			{
+				displayName: 'last_name',
+				name: 'last_name',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['sendContact'],
+						resource: ['message'],
+					},
+				},
+				description: 'Last name of the contact to be sent',
+			},
 
 			// ----------------------------------
 			//         message:sendLocation
@@ -1114,6 +1196,25 @@ export class BaleMessenger implements INodeType {
 						binary: {},
 						pairedItem: {item: i},
 					});
+				}
+
+				if (operation === 'sendContact') {
+					const phone_number = this.getNodeParameter('phone_number', i) as string;
+					const first_name = this.getNodeParameter('first_name', i) as string;
+					const last_name = this.getNodeParameter('last_name', i) as string;
+					const replyToMessageId = this.getNodeParameter('replyToMessageId', i) as number;
+					const reply_markup = getMarkup.call(this, i);
+
+					const res = await sendContact(credentials.token as string, chatId, phone_number,
+						first_name, last_name, replyToMessageId, reply_markup);
+					returnData.push({
+						json: {
+							...res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+
 				}
 			}
 		}
