@@ -8,6 +8,8 @@ import {
 import {BINARY_ENCODING, IExecuteFunctions} from 'n8n-core';
 import {default as TelegramBot, InlineQueryResult} from 'node-telegram-bot-api';
 
+const BALE_API_URL = `https://tapi.bale.ai/bot}`;
+
 function getMarkup(this: IExecuteFunctions, i: number) {
 	const replyMarkupOption = this.getNodeParameter('replyMarkup', i) as string;
 	let reply_markup: any = {};
