@@ -50,6 +50,31 @@ function getMarkup(this: IExecuteFunctions, i: number) {
 	return reply_markup;
 }
 
+async function answerCallbackQuery(token: string, callbackQueryId: string, text?: string): Promise<any> {
+	const data: Record<string, any> = {callback_query_id: callbackQueryId};
+	if (text) {
+		data.text = text;
+	}
+
+	// Log the URL to ensure it's correct
+	const url = `${BALE_API_URL}${token}/answerCallbackQuery`;
+	console.log('Request URL:', url);
+	console.log('Request Data:', data);
+
+	try {
+		const response = await axios.post(url, data, {
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		});
+		console.log('Response from Bale:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Failed to answer callback query:', error.response ? error.response.data : error.message);
+		throw error;
+	}
+}
+
 async function sendContact(token: string, chat_id: string, phone_number: string, first_name: string,
 													 last_name?: string, replyToMessageId?: number, reply_markup?: any) {
 	const data: Record<string, any> = {
@@ -1041,34 +1066,85 @@ export class BaleMessenger implements INodeType {
 					const query_id = this.getNodeParameter('queryId', i) as string;
 
 					// Add additional fields
-					const additionalFields = this.getNodeParameter('additionalFields', i);
-					const res = await bot.answerCallbackQuery(query_id, additionalFields);
-					returnData.push({
-						json: {
-							successful: res,
-						},
-						binary: {},
-						pairedItem: {item: i},
-					});
+					// const additionalFields = this.getNodeParameter('additionalFields', i);
+					try {
+						const res = await answerCallbackQuery(credentials.token as string, query_id, "amir");
+						returnData.push({
+							json: {
+								successful: res,
+							},
+							binary: {},
+							pairedItem: {item: i},
+						});
+					} catch (error) {
+						// Log the error for debugging purposes
+						console.error('Error answering callback query:', error);
+						// Optionally, you can add more information to the returned data for further inspection
+						returnData.push({
+							json: {
+								successful: false,
+								errorMessage: error.message,
+								errorDetails: error.response ? error.response.data : {},
+							},
+							binary: {},
+							pairedItem: {item: i},
+						});
+					}
 				} else if (operation === 'answerInlineQuery') {
 					// -----------------------------------------------
 					//         callback:answerInlineQuery
 					// -----------------------------------------------
 
 					const query_id = this.getNodeParameter('queryId', i) as string;
-					const results = this.getNodeParameter('results', i) as InlineQueryResult[];
+					const resultsParam = this.getNodeParameter('results', i) as string;
+					let results: InlineQueryResult[] = [];
+
+					try {
+						results = JSON.parse(resultsParam) as InlineQueryResult[];
+					} catch (error) {
+						throw new NodeOperationError(this.getNode(), 'The results parameter is not a valid JSON string.', {
+							itemIndex: i,
+						});
+					}
+
+					// Log the parsed results for debugging
+					console.log('Parsed results:', JSON.stringify(results, null, 2));
 
 					// Add additional fields
-					const additionalFields = this.getNodeParameter('additionalFields', i);
-					const res = await bot.answerInlineQuery(query_id, results, additionalFields);
-					returnData.push({
-						json: {
-							successful: res,
-						},
-						binary: {},
-						pairedItem: {item: i},
-					});
+					const additionalFields = this.getNodeParameter('additionalFields', i) || {};
+
+					try {
+						// Log the payload being sent to Telegram API
+						console.log('Sending answerInlineQuery request with:', JSON.stringify({
+							query_id,
+							results,
+							additionalFields
+						}, null, 2));
+
+						// Send request to Telegram API
+						const res = await bot.answerInlineQuery(query_id, results, additionalFields);
+
+						// Log the response from Telegram API
+						console.log('Received response:', res);
+
+						returnData.push({
+							json: {
+								successful: res,
+							},
+							binary: {},
+							pairedItem: {item: i},
+						});
+					} catch (error) {
+						// Log the error for debugging
+						console.error('Failed to answer inline query:', error);
+
+						throw new NodeOperationError(this.getNode(), `Failed to answer inline query: ${error.message}`, {
+							itemIndex: i,
+							...error,
+						});
+					}
 				}
+
 			} else if (resource === 'message') {
 				const chatId = this.getNodeParameter('chatId', i) as string;
 
