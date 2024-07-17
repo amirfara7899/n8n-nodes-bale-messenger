@@ -9,7 +9,7 @@ import axios from 'axios';
 import {BINARY_ENCODING, IExecuteFunctions} from 'n8n-core';
 import {default as TelegramBot, InlineQueryResult} from 'node-telegram-bot-api';
 
-const BALE_API_URL = `https://tapi.bale.ai/bot}`;
+const BALE_API_URL = `https://tapi.bale.ai/bot`;
 
 function getMarkup(this: IExecuteFunctions, i: number) {
 	const replyMarkupOption = this.getNodeParameter('replyMarkup', i) as string;
@@ -363,6 +363,7 @@ export class BaleMessenger implements INodeType {
 							'sendPhoto',
 							'sendAudio',
 							'sendVideo',
+							'sendAnimation',
 							'sendSticker',
 							'deleteMessage',
 							'sendChatAction',
@@ -385,7 +386,7 @@ export class BaleMessenger implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo'],
+						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendAnimation'],
 						resource: ['message'],
 					},
 				},
@@ -400,7 +401,7 @@ export class BaleMessenger implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendSticker'],
+						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendAnimation', 'sendSticker'],
 						resource: ['message'],
 						binaryData: [true],
 					},
@@ -416,7 +417,7 @@ export class BaleMessenger implements INodeType {
 				default: '',
 				displayOptions: {
 					show: {
-						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo'],
+						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendAnimation'],
 						resource: ['message'],
 						binaryData: [false],
 					},
@@ -450,6 +451,7 @@ export class BaleMessenger implements INodeType {
 							'sendPhoto',
 							'sendAudio',
 							'sendVideo',
+							'sendAnimation',
 							'editMessageText',
 							'sendLocation',
 							'sendContact',
@@ -649,6 +651,7 @@ export class BaleMessenger implements INodeType {
 							'sendPhoto',
 							'sendAudio',
 							'sendVideo',
+							'sendAnimation',
 							'sendSticker',
 							'sendContact',
 						],
@@ -1234,7 +1237,7 @@ export class BaleMessenger implements INodeType {
 					});
 				}
 
-				if (['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo'].includes(operation)) {
+				if (['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendAnimation'].includes(operation)) {
 					let fileOptions = undefined;
 					let uploadData = undefined;
 					const options = {reply_markup: getMarkup.call(this, i)};
@@ -1256,6 +1259,8 @@ export class BaleMessenger implements INodeType {
 						await bot.sendAudio(chatId, uploadData, options, fileOptions);
 					else if (operation === 'sendVideo')
 						await bot.sendVideo(chatId, uploadData, options, fileOptions);
+					else if (operation === 'sendAnimation')
+						await bot.sendAnimation(chatId, uploadData, options)
 				}
 
 				if (operation === 'sendLocation') {
