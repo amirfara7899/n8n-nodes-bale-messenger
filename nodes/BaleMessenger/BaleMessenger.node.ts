@@ -383,6 +383,7 @@ export class BaleMessenger implements INodeType {
 							'sendVoice',
 							'sendVideo',
 							'sendAnimation',
+							'sendMediaGroup',
 							'sendSticker',
 							'deleteMessage',
 							'sendChatAction',
@@ -693,6 +694,7 @@ export class BaleMessenger implements INodeType {
 							'sendVoice',
 							'sendVideo',
 							'sendAnimation',
+							'sendMediaGroup',
 							'sendSticker',
 							'sendContact',
 						],
@@ -1051,6 +1053,98 @@ export class BaleMessenger implements INodeType {
 					},
 				],
 			},
+
+
+			// -----------------------------------------------
+			//         message: sendMediaGroup
+			// -----------------------------------------------
+			{
+				displayName: 'Media',
+				name: 'media',
+				type: 'fixedCollection',
+				displayOptions: {
+					show: {
+						operation: ['sendMediaGroup'],
+						resource: ['message'],
+					},
+				},
+				description: 'The media to add',
+				placeholder: 'Add Media',
+				typeOptions: {
+					multipleValues: true,
+				},
+				default: {},
+				options: [
+					{
+						displayName: 'Media',
+						name: 'media',
+						values: [
+							{
+								displayName: 'Type',
+								name: 'type',
+								type: 'options',
+								options: [
+									{
+										name: 'Photo',
+										value: 'photo',
+									},
+									{
+										name: 'Video',
+										value: 'video',
+									},
+								],
+								default: 'photo',
+								description: 'The type of the media to add',
+							},
+							{
+								displayName: 'Media File',
+								name: 'media',
+								type: 'string',
+								default: '',
+								description:
+									'Media to send. Pass a file_id to send a file that exists on the Telegram servers (recommended) or pass an HTTP URL for Telegram to get a file from the Internet.',
+							},
+							{
+								displayName: 'Additional Fields',
+								name: 'additionalFields',
+								type: 'collection',
+								placeholder: 'Add Field',
+								default: {},
+								options: [
+									{
+										displayName: 'Caption',
+										name: 'caption',
+										type: 'string',
+										default: '',
+										description: 'Caption text to set, 0-1024 characters',
+									},
+									{
+										displayName: 'Parse Mode',
+										name: 'parse_mode',
+										type: 'options',
+										options: [
+											{
+												name: 'Markdown (Legacy)',
+												value: 'Markdown',
+											},
+											{
+												name: 'MarkdownV2',
+												value: 'MarkdownV2',
+											},
+											{
+												name: 'HTML',
+												value: 'HTML',
+											},
+										],
+										default: 'HTML',
+										description: 'How to parse the text',
+									},
+								],
+							},
+						],
+					},
+				],
+			},
 		],
 	};
 
@@ -1245,9 +1339,7 @@ export class BaleMessenger implements INodeType {
 
 					// Add additional fields and replyMarkup
 					// addAdditionalFields.call(this, body, i);
-				}
-
-				else if (operation === 'sendSticker') {
+				} else if (operation === 'sendSticker') {
 					const stickerId = this.getNodeParameter('stickerId', i) as string;
 					const replyToMessageId = this.getNodeParameter('replyToMessageId', i) as number;
 
@@ -1262,9 +1354,7 @@ export class BaleMessenger implements INodeType {
 						binary: {},
 						pairedItem: {item: i},
 					});
-				}
-
-				else if (operation === 'deleteMessage') {
+				} else if (operation === 'deleteMessage') {
 					const messageId = this.getNodeParameter('messageId', i) as number;
 
 					await bot.deleteMessage(chatId, messageId);
@@ -1276,9 +1366,7 @@ export class BaleMessenger implements INodeType {
 						binary: {},
 						pairedItem: {item: i},
 					});
-				}
-
-				else if (operation === 'copyMessage'){
+				} else if (operation === 'copyMessage') {
 					const fromChatId = this.getNodeParameter('fromChatId', i) as string;
 					const messageId = this.getNodeParameter('messageId', i) as number;
 
@@ -1291,9 +1379,7 @@ export class BaleMessenger implements INodeType {
 						binary: {},
 						pairedItem: {item: i},
 					});
-				}
-
-				else if (operation === 'forwardMessage'){
+				} else if (operation === 'forwardMessage') {
 					const fromChatId = this.getNodeParameter('fromChatId', i) as string;
 					const messageId = this.getNodeParameter('messageId', i) as number;
 
@@ -1306,12 +1392,9 @@ export class BaleMessenger implements INodeType {
 						binary: {},
 						pairedItem: {item: i},
 					});
-				}
-
-
-				else if (['sendDocument', 'sendPhoto', 'sendAudio', 'sendVoice', 'sendVideo', 'sendAnimation'].includes(operation)) {
+				} else if (['sendDocument', 'sendPhoto', 'sendAudio', 'sendVoice', 'sendVideo', 'sendAnimation'].includes(operation)) {
 					let fileOptions = undefined;
-					let uploadData = undefined;
+					let uploadData = undefined
 					const options = {reply_markup: getMarkup.call(this, i)};
 					if (binaryData) {
 						const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
@@ -1322,7 +1405,6 @@ export class BaleMessenger implements INodeType {
 						// file_id passed
 						uploadData = this.getNodeParameter('fileId', 0) as string;
 					}
-
 					if (operation === 'sendDocument')
 						await bot.sendDocument(chatId, uploadData, options, fileOptions);
 					else if (operation === 'sendPhoto')
@@ -1335,9 +1417,26 @@ export class BaleMessenger implements INodeType {
 						await bot.sendVideo(chatId, uploadData, options, fileOptions);
 					else if (operation === 'sendAnimation')
 						await bot.sendAnimation(chatId, uploadData, options)
-				}
 
-				else if (operation === 'sendLocation') {
+				} else if (operation === 'sendMediaGroup') {
+					const mediaItems = this.getNodeParameter('media', i) as IDataObject;
+					const replyToMessageId = this.getNodeParameter('replyToMessageId', i) as number;
+
+					const body: any = {
+						media: [],
+					};
+					for (const mediaItem of mediaItems.media as IDataObject[]) {
+						if (mediaItem.additionalFields !== undefined) {
+							Object.assign(mediaItem, mediaItem.additionalFields);
+							delete mediaItem.additionalFields;
+						}
+						body.media.push(mediaItem);
+					}
+
+					await bot.sendMediaGroup(chatId, body.media, {
+						reply_to_message_id: replyToMessageId,
+					})
+				} else if (operation === 'sendLocation') {
 					const latitude = this.getNodeParameter('latitude', i) as number;
 					const longitude = this.getNodeParameter('longitude', i) as number;
 					const horizontal_accuracy = this.getNodeParameter('horizontal_accuracy', i) as number;
@@ -1351,9 +1450,7 @@ export class BaleMessenger implements INodeType {
 						binary: {},
 						pairedItem: {item: i},
 					});
-				}
-
-				else if (operation === 'sendContact') {
+				} else if (operation === 'sendContact') {
 					const phone_number = this.getNodeParameter('phone_number', i) as string;
 					const first_name = this.getNodeParameter('first_name', i) as string;
 					const last_name = this.getNodeParameter('last_name', i) as string;
