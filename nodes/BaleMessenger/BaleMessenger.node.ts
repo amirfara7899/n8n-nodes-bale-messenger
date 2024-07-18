@@ -265,6 +265,12 @@ export class BaleMessenger implements INodeType {
 						description: 'Send a contact',
 						action: 'Send a contact',
 					},
+					{
+						name: 'Copy Message',
+						value: 'copyMessage',
+						description: 'Copy a message',
+						action: 'Copy a message',
+					}
 				],
 				default: 'sendMessage',
 			},
@@ -370,12 +376,30 @@ export class BaleMessenger implements INodeType {
 							'editMessageText',
 							'sendLocation',
 							'sendContact',
+							'copyMessage',
 						],
 						resource: ['chat', 'message'],
 					},
 				},
 				required: true,
 				description: 'Unique identifier for the target chat',
+			},
+
+			{
+				displayName: 'From Chat ID',
+				name: 'fromChatId',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: [
+							'copyMessage',
+						],
+						resource: ['chat', 'message'],
+					},
+				},
+				required: true,
+				description: 'Unique identifier for the chat where the original message was sent',
 			},
 
 			{
@@ -682,7 +706,7 @@ export class BaleMessenger implements INodeType {
 				default: '',
 				displayOptions: {
 					show: {
-						operation: ['deleteMessage', 'editMessageText'],
+						operation: ['deleteMessage', 'editMessageText', 'copyMessage'],
 						resource: ['message'],
 					},
 				},
@@ -1231,6 +1255,21 @@ export class BaleMessenger implements INodeType {
 					returnData.push({
 						json: {
 							messageDeleted: true,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				}
+
+				if (operation === 'copyMessage'){
+					const fromChatId = this.getNodeParameter('fromChatId', i) as string;
+					const messageId = this.getNodeParameter('messageId', i) as number;
+
+					const res = bot.copyMessage(chatId, fromChatId, messageId);
+
+					returnData.push({
+						json: {
+							messageId: res,
 						},
 						binary: {},
 						pairedItem: {item: i},
