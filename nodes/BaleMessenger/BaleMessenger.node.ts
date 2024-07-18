@@ -206,6 +206,12 @@ export class BaleMessenger implements INodeType {
 						action: 'Send an audio file',
 					},
 					{
+						name: 'Send Voice',
+						value: 'sendVoice',
+						description: 'Send a voice',
+						action: 'Send a voice',
+					},
+					{
 						name: 'Send Chat Action',
 						value: 'sendChatAction',
 						description: 'Send a chat action',
@@ -374,6 +380,7 @@ export class BaleMessenger implements INodeType {
 							'sendMessage',
 							'sendPhoto',
 							'sendAudio',
+							'sendVoice',
 							'sendVideo',
 							'sendAnimation',
 							'sendSticker',
@@ -418,7 +425,7 @@ export class BaleMessenger implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendAnimation'],
+						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendAnimation', 'sendVoice'],
 						resource: ['message'],
 					},
 				},
@@ -433,7 +440,7 @@ export class BaleMessenger implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendAnimation', 'sendSticker'],
+						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVoice', 'sendVideo', 'sendAnimation', 'sendSticker'],
 						resource: ['message'],
 						binaryData: [true],
 					},
@@ -449,7 +456,7 @@ export class BaleMessenger implements INodeType {
 				default: '',
 				displayOptions: {
 					show: {
-						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendAnimation'],
+						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVoice', 'sendVideo', 'sendAnimation'],
 						resource: ['message'],
 						binaryData: [false],
 					},
@@ -482,6 +489,7 @@ export class BaleMessenger implements INodeType {
 							'sendMessage',
 							'sendPhoto',
 							'sendAudio',
+							'sendVoice',
 							'sendVideo',
 							'sendAnimation',
 							'editMessageText',
@@ -682,6 +690,7 @@ export class BaleMessenger implements INodeType {
 							'sendMessage',
 							'sendPhoto',
 							'sendAudio',
+							'sendVoice',
 							'sendVideo',
 							'sendAnimation',
 							'sendSticker',
@@ -1300,7 +1309,7 @@ export class BaleMessenger implements INodeType {
 				}
 
 
-				else if (['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendAnimation'].includes(operation)) {
+				else if (['sendDocument', 'sendPhoto', 'sendAudio', 'sendVoice', 'sendVideo', 'sendAnimation'].includes(operation)) {
 					let fileOptions = undefined;
 					let uploadData = undefined;
 					const options = {reply_markup: getMarkup.call(this, i)};
@@ -1320,6 +1329,8 @@ export class BaleMessenger implements INodeType {
 						await bot.sendPhoto(chatId, uploadData, options, fileOptions);
 					else if (operation === 'sendAudio')
 						await bot.sendAudio(chatId, uploadData, options, fileOptions);
+					else if (operation === 'sendVoice')
+						await bot.sendVoice(chatId, uploadData, options, fileOptions);
 					else if (operation === 'sendVideo')
 						await bot.sendVideo(chatId, uploadData, options, fileOptions);
 					else if (operation === 'sendAnimation')
