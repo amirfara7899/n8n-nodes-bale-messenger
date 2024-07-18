@@ -1238,7 +1238,7 @@ export class BaleMessenger implements INodeType {
 					// addAdditionalFields.call(this, body, i);
 				}
 
-				if (operation === 'sendSticker') {
+				else if (operation === 'sendSticker') {
 					const stickerId = this.getNodeParameter('stickerId', i) as string;
 					const replyToMessageId = this.getNodeParameter('replyToMessageId', i) as number;
 
@@ -1255,7 +1255,7 @@ export class BaleMessenger implements INodeType {
 					});
 				}
 
-				if (operation === 'deleteMessage') {
+				else if (operation === 'deleteMessage') {
 					const messageId = this.getNodeParameter('messageId', i) as number;
 
 					await bot.deleteMessage(chatId, messageId);
@@ -1269,7 +1269,7 @@ export class BaleMessenger implements INodeType {
 					});
 				}
 
-				if (operation === 'copyMessage'){
+				else if (operation === 'copyMessage'){
 					const fromChatId = this.getNodeParameter('fromChatId', i) as string;
 					const messageId = this.getNodeParameter('messageId', i) as number;
 
@@ -1326,7 +1326,7 @@ export class BaleMessenger implements INodeType {
 						await bot.sendAnimation(chatId, uploadData, options)
 				}
 
-				if (operation === 'sendLocation') {
+				else if (operation === 'sendLocation') {
 					const latitude = this.getNodeParameter('latitude', i) as number;
 					const longitude = this.getNodeParameter('longitude', i) as number;
 					const horizontal_accuracy = this.getNodeParameter('horizontal_accuracy', i) as number;
@@ -1342,7 +1342,7 @@ export class BaleMessenger implements INodeType {
 					});
 				}
 
-				if (operation === 'sendContact') {
+				else if (operation === 'sendContact') {
 					const phone_number = this.getNodeParameter('phone_number', i) as string;
 					const first_name = this.getNodeParameter('first_name', i) as string;
 					const last_name = this.getNodeParameter('last_name', i) as string;
