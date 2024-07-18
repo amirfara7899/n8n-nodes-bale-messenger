@@ -270,7 +270,13 @@ export class BaleMessenger implements INodeType {
 						value: 'copyMessage',
 						description: 'Copy a message',
 						action: 'Copy a message',
-					}
+					},
+					{
+						name: 'Forward Message',
+						value: 'forwardMessage',
+						description: 'Forward a message',
+						action: 'Forward a message'
+					},
 				],
 				default: 'sendMessage',
 			},
@@ -377,6 +383,7 @@ export class BaleMessenger implements INodeType {
 							'sendLocation',
 							'sendContact',
 							'copyMessage',
+							'forwardMessage',
 						],
 						resource: ['chat', 'message'],
 					},
@@ -394,6 +401,7 @@ export class BaleMessenger implements INodeType {
 					show: {
 						operation: [
 							'copyMessage',
+							'forwardMessage',
 						],
 						resource: ['chat', 'message'],
 					},
@@ -706,7 +714,7 @@ export class BaleMessenger implements INodeType {
 				default: '',
 				displayOptions: {
 					show: {
-						operation: ['deleteMessage', 'editMessageText', 'copyMessage'],
+						operation: ['deleteMessage', 'editMessageText', 'copyMessage', 'forwardMessage'],
 						resource: ['message'],
 					},
 				},
@@ -1276,7 +1284,23 @@ export class BaleMessenger implements INodeType {
 					});
 				}
 
-				if (['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendAnimation'].includes(operation)) {
+				else if (operation === 'forwardMessage'){
+					const fromChatId = this.getNodeParameter('fromChatId', i) as string;
+					const messageId = this.getNodeParameter('messageId', i) as number;
+
+					const res = bot.forwardMessage(chatId, fromChatId, messageId);
+
+					returnData.push({
+						json: {
+							res: res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				}
+
+
+				else if (['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendAnimation'].includes(operation)) {
 					let fileOptions = undefined;
 					let uploadData = undefined;
 					const options = {reply_markup: getMarkup.call(this, i)};
