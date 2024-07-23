@@ -188,6 +188,12 @@ export class BaleMessenger implements INodeType {
 				},
 				options: [
 					{
+						name: 'Copy Message',
+						value: 'copyMessage',
+						description: 'Copy a message',
+						action: 'Copy a message',
+					},
+					{
 						name: 'Delete Chat Message',
 						value: 'deleteMessage',
 						description: 'Delete a chat message',
@@ -198,6 +204,12 @@ export class BaleMessenger implements INodeType {
 						value: 'editMessageText',
 						description: 'Edit a text message',
 						action: 'Edit a test message',
+					},
+					{
+						name: 'Forward Message',
+						value: 'forwardMessage',
+						description: 'Forward a message',
+						action: 'Forward a message'
 					},
 					{
 						name: 'Send Audio',
@@ -270,18 +282,6 @@ export class BaleMessenger implements INodeType {
 						value: 'sendContact',
 						description: 'Send a contact',
 						action: 'Send a contact',
-					},
-					{
-						name: 'Copy Message',
-						value: 'copyMessage',
-						description: 'Copy a message',
-						action: 'Copy a message',
-					},
-					{
-						name: 'Forward Message',
-						value: 'forwardMessage',
-						description: 'Forward a message',
-						action: 'Forward a message'
 					},
 				],
 				default: 'sendMessage',
