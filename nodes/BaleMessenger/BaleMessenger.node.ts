@@ -302,7 +302,7 @@ export class BaleMessenger implements INodeType {
 						name: 'Answer Query',
 						value: 'answerQuery',
 						description: 'Send answer to callback query sent from inline keyboard',
-						action: 'Answer Query a callback',
+						action: 'Answer a query callback',
 					},
 					{
 						name: 'Answer Inline Query',
@@ -804,7 +804,7 @@ export class BaleMessenger implements INodeType {
 			//         message:sendContact
 			// ----------------------------------
 			{
-				displayName: 'phone_number',
+				displayName: 'Phone number',
 				name: 'phone_number',
 				type: 'string',
 				required: true,
@@ -820,7 +820,7 @@ export class BaleMessenger implements INodeType {
 			},
 
 			{
-				displayName: 'first_name',
+				displayName: 'First Name',
 				name: 'first_name',
 				type: 'string',
 				required: true,
@@ -834,7 +834,7 @@ export class BaleMessenger implements INodeType {
 				description: 'First name of the contact to be sent',
 			},
 			{
-				displayName: 'last_name',
+				displayName: 'Last Name',
 				name: 'last_name',
 				type: 'string',
 				default: '',
