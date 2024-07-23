@@ -212,16 +212,16 @@ export class BaleMessenger implements INodeType {
 						action: 'Forward a message'
 					},
 					{
+						name: 'Send Animation',
+						value: 'sendAnimation',
+						description: 'Send an animated file',
+						action: 'Send an animated file',
+					},
+					{
 						name: 'Send Audio',
 						value: 'sendAudio',
 						description: 'Send an audio file',
 						action: 'Send an audio file',
-					},
-					{
-						name: 'Send Voice',
-						value: 'sendVoice',
-						description: 'Send a voice',
-						action: 'Send a voice',
 					},
 					{
 						name: 'Send Chat Action',
@@ -230,10 +230,28 @@ export class BaleMessenger implements INodeType {
 						action: 'Send a chat action',
 					},
 					{
+						name: 'Send Contact',
+						value: 'sendContact',
+						description: 'Send a contact',
+						action: 'Send a contact',
+					},
+					{
 						name: 'Send Document',
 						value: 'sendDocument',
 						description: 'Send a document',
 						action: 'Send a document',
+					},
+					{
+						name: 'Send Location',
+						value: 'sendLocation',
+						description: 'Send a location',
+						action: 'Send a location',
+					},
+					{
+						name: 'Send Media Group',
+						value: 'sendMediaGroup',
+						description: 'Send group of photos or videos to album',
+						action: 'Send a media group message',
 					},
 					{
 						name: 'Send Message',
@@ -260,30 +278,13 @@ export class BaleMessenger implements INodeType {
 						action: 'Send a video',
 					},
 					{
-						name: 'Send Animation',
-						value: 'sendAnimation',
-						description: 'Send an animated file',
-						action: 'Send an animated file',
-					},
-					{
-						name: 'Send Location',
-						value: 'sendLocation',
-						description: 'Send a location',
-						action: 'Send a location',
-					},
-					{
-						name: 'Send Media Group',
-						value: 'sendMediaGroup',
-						description: 'Send group of photos or videos to album',
-						action: 'Send a media group message',
-					},
-					{
-						name: 'Send Contact',
-						value: 'sendContact',
-						description: 'Send a contact',
-						action: 'Send a contact',
+						name: 'Send Voice',
+						value: 'sendVoice',
+						description: 'Send a voice',
+						action: 'Send a voice',
 					},
 				],
+
 				default: 'sendMessage',
 			},
 
@@ -804,7 +805,7 @@ export class BaleMessenger implements INodeType {
 			//         message:sendContact
 			// ----------------------------------
 			{
-				displayName: 'Phone number',
+				displayName: 'Phone Number',
 				name: 'phone_number',
 				type: 'string',
 				required: true,
