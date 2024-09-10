@@ -132,6 +132,10 @@ export class BaleMessenger implements INodeType {
 						value: 'bot'
 					},
 					{
+						name: 'Chat',
+						value: 'chat',
+					},
+					{
 						name: 'Message',
 						value: 'message',
 					},
@@ -141,6 +145,33 @@ export class BaleMessenger implements INodeType {
 					},
 				],
 				default: 'message',
+			},
+
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['chat'],
+					},
+				},
+				options: [
+					{
+						name: 'Get Chat',
+						value: 'getChat',
+						description: 'Get up to date information about a chat',
+						action: 'Get a chat',
+					},
+					{
+						name: 'Leave Chat',
+						value: 'leaveChat',
+						description: 'Leave a group, supergroup or channel',
+						action: 'Leave a chat',
+					},
+				],
+				default: 'getChat',
 			},
 
 			{
@@ -393,6 +424,8 @@ export class BaleMessenger implements INodeType {
 							'sendContact',
 							'copyMessage',
 							'forwardMessage',
+							'getChat',
+							'leaveChat',
 						],
 						resource: ['chat', 'message'],
 					},
