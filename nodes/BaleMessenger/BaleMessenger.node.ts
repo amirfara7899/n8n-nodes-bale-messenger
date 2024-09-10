@@ -162,12 +162,28 @@ export class BaleMessenger implements INodeType {
 					},
 				},
 				options: [
+
+					{
+							name: 'Ban Chat Member',
+							value: 'banChatMember',
+							description: 'Ban a member from the chat',
+							action: 'Ban a member from the chat',
+					},
+
 					{
 						name: 'Get Chat',
 						value: 'getChat',
 						description: 'Get up to date information about a chat',
 						action: 'Get a chat',
 					},
+
+					{
+						name: 'Get Chat Member Count',
+						value: 'getChatMemberCount',
+						description: 'Get a chat member count',
+						action: 'Get a chat member count',
+					},
+
 					{
 						name: 'Leave Chat',
 						value: 'leaveChat',
@@ -176,10 +192,10 @@ export class BaleMessenger implements INodeType {
 					},
 
 					{
-						name: 'Get Chat Member Count',
-						value: 'getChatMemberCount',
-						description: 'Get a chat member count',
-						action: 'Get a chat member count',
+						name: 'Unban Chat Member',
+						value: 'unbanChatMember',
+						description: 'Unban a member from the chat',
+						action: 'Unban a member from the chat',
 					},
 				],
 				default: 'getChat',
@@ -438,6 +454,8 @@ export class BaleMessenger implements INodeType {
 							'getChat',
 							'leaveChat',
 							'getChatMemberCount',
+							'banChatMember',
+							'unbanChatMember',
 						],
 						resource: ['chat', 'message'],
 					},
@@ -1191,6 +1209,39 @@ export class BaleMessenger implements INodeType {
 					},
 				],
 			},
+
+			// -----------------------------------------------
+			//         chat: banChatMember or unbanChatMember
+			// -----------------------------------------------
+			{
+				displayName: 'UserId',
+				name: 'userId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: {
+					show: {
+						operation: ['banChatMember', 'unbanChatMember'],
+						resource: ['chat'],
+					},
+				},
+				description: 'Ban a Member from a chat',
+			},
+			{
+				displayName: 'Only If Banned',
+				name: 'onlyIfBanned',
+				type: 'boolean',
+				default: false,
+				required: true,
+				displayOptions: {
+					show: {
+						operation: ['unbanChatMember'],
+						resource: ['chat'],
+					},
+				},
+				description: 'Whether the user is blocked or not, perform the action if they are not blocked',
+			},
+
 		],
 	};
 
@@ -1548,6 +1599,29 @@ export class BaleMessenger implements INodeType {
 							pairedItem: {item: i},
 						});
 				}
+				else if (operation === 'banChatMember'){
+					const userId = this.getNodeParameter('userId', i) as number;
+					const res = await bot.banChatMember(chatId, userId);
+					returnData.push({
+							json: {
+								banned: res,
+							},
+							binary: {},
+							pairedItem: {item: i},
+						});
+				}
+				else if (operation === 'unbanChatMember'){
+					const userId = this.getNodeParameter('userId', i) as number;
+					const res = await bot.unbanChatMember(chatId, userId);
+					returnData.push({
+							json: {
+								unbanned: res,
+							},
+							binary: {},
+							pairedItem: {item: i},
+						});
+				}
+
 			}
 		}
 		return this.prepareOutputData(returnData);
