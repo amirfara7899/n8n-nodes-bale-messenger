@@ -132,6 +132,10 @@ export class BaleMessenger implements INodeType {
 						value: 'bot'
 					},
 					{
+						name: 'Callback',
+						value: 'callback',
+					},
+					{
 						name: 'Chat',
 						value: 'chat',
 					},
@@ -140,8 +144,8 @@ export class BaleMessenger implements INodeType {
 						value: 'message',
 					},
 					{
-						name: 'Callback',
-						value: 'callback',
+						name: 'Payment',
+						value: 'payment',
 					},
 				],
 				default: 'message',
