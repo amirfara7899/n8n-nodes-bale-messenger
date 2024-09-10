@@ -1503,6 +1503,30 @@ export class BaleMessenger implements INodeType {
 
 				}
 			}
+			else if (resource === 'chat')
+			{
+				const chatId = this.getNodeParameter('chatId', i) as string;
+				if (operation === 'getChat'){
+					const res = await  bot.getChat(chatId)
+					returnData.push({
+							json: {
+								...res,
+							},
+							binary: {},
+							pairedItem: {item: i},
+						});
+				}
+				else if (operation === 'leaveChat'){
+					const res = await  bot.leaveChat(chatId)
+					returnData.push({
+							json: {
+								leaved: res,
+							},
+							binary: {},
+							pairedItem: {item: i},
+						});
+				}
+			}
 		}
 		return this.prepareOutputData(returnData);
 	}
