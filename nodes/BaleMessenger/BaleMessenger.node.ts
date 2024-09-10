@@ -11,6 +11,11 @@ import {default as TelegramBot, InlineQueryResult} from 'node-telegram-bot-api';
 
 const BALE_API_URL = `https://tapi.bale.ai/bot`;
 
+interface LabeledPrice {
+	label: string;
+	amount: number;
+}
+
 function getMarkup(this: IExecuteFunctions, i: number) {
 	const replyMarkupOption = this.getNodeParameter('replyMarkup', i) as string;
 	let reply_markup: any = {};
@@ -82,10 +87,37 @@ async function sendContact(token: string, chat_id: string, phone_number: string,
 		phone_number: phone_number,
 		first_name: first_name,
 		last_name: last_name,
-		replyToMessageId: replyToMessageId,
+		reply_to_message_id: replyToMessageId,
 		reply_markup: reply_markup
 	};
 	const url = `${BALE_API_URL}${token}/sendContact`;
+	try {
+		const response = await axios.post(url, data, {
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		});
+		console.log('Response from Bale:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Failed to send contact:', error.response ? error.response.data : error.message);
+		throw error;
+	}
+}
+
+async function sendInvoice(token: string, chatId: string, title: string, description: string, payload: string, providerToken: string,
+													 prices: LabeledPrice[], photoUrl?: string, replyMarkup?: any) {
+	const data: Record<string, any> = {
+		chat_id: chatId,
+		title: title,
+		description: description,
+		payload: payload,
+		provider_token: providerToken,
+		prices: prices,
+		photo_url: photoUrl,
+		reply_markup: replyMarkup
+	};
+	const url = `${BALE_API_URL}${token}/sendInvoice`;
 	try {
 		const response = await axios.post(url, data, {
 			headers: {
@@ -164,10 +196,10 @@ export class BaleMessenger implements INodeType {
 				options: [
 
 					{
-							name: 'Ban Chat Member',
-							value: 'banChatMember',
-							description: 'Ban a member from the chat',
-							action: 'Ban a member from the chat',
+						name: 'Ban Chat Member',
+						value: 'banChatMember',
+						description: 'Ban a member from the chat',
+						action: 'Ban a member from the chat',
 					},
 
 					{
@@ -373,6 +405,28 @@ export class BaleMessenger implements INodeType {
 				default: 'answerQuery',
 			},
 
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['payment'],
+					},
+				},
+				options: [
+					{
+						name: 'Send Invoice',
+						value: 'sendInvoice',
+						description: 'Send a request for payment',
+						action: 'Send a request for payment',
+					},
+				],
+				default: 'sendInvoice',
+			},
+
+
 			// edit message
 			{
 				displayName: 'Message Type',
@@ -454,10 +508,11 @@ export class BaleMessenger implements INodeType {
 							'getChat',
 							'leaveChat',
 							'getChatMemberCount',
+							'sendInvoice',
 							'banChatMember',
 							'unbanChatMember',
 						],
-						resource: ['chat', 'message'],
+						resource: ['chat', 'message', 'payment'],
 					},
 				},
 				required: true,
@@ -560,8 +615,9 @@ export class BaleMessenger implements INodeType {
 							'editMessageText',
 							'sendLocation',
 							'sendContact',
+							'sendInvoice',
 						],
-						resource: ['message'],
+						resource: ['message', 'payment'],
 					},
 				},
 				type: 'options',
@@ -1242,6 +1298,120 @@ export class BaleMessenger implements INodeType {
 				description: 'Whether the user is blocked or not, perform the action if they are not blocked',
 			},
 
+			// -----------------------------------------------
+			//         payment: sendInvoice
+			// -----------------------------------------------
+			{
+				displayName: 'Title',
+				name: 'title',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['sendInvoice'],
+						resource: ['payment'],
+					},
+				},
+				description: 'Set title for invoice',
+			},
+
+			{
+				displayName: 'Description',
+				name: 'description',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['sendInvoice'],
+						resource: ['payment'],
+					},
+				},
+				description: 'Send an invoice for payment',
+			},
+
+			{
+				displayName: 'Payload',
+				name: 'payload',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['sendInvoice'],
+						resource: ['payment'],
+					},
+				},
+				description: 'Invoice payload for internal processes, used to differentiate payment requests, not visible to the user (1 to 128 bytes)',
+			},
+
+			{
+				displayName: 'Provider Token',
+				name: 'providerToken',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['sendInvoice'],
+						resource: ['payment'],
+					},
+				},
+				description: 'Card number for request',
+			},
+
+			{
+				displayName: 'Prices',
+				name: 'prices',
+				type: 'fixedCollection',
+				typeOptions: {
+					multipleValues: true,
+				},
+				default: {},
+				placeholder: '[{ "label": "Product A", "amount": 1000 }, { "label": "Product B", "amount": 2000 }]',
+				options: [
+					{
+						name: 'priceItem',
+						displayName: 'Price Item',
+						values: [
+							{
+								displayName: 'Label',
+								name: 'label',
+								type: 'string',
+								default: '',
+								description: 'The label for the item (e.g., product name)',
+							},
+							{
+								displayName: 'Amount',
+								name: 'amount',
+								type: 'number',
+								default: 0,
+								description: 'The price for the item (in smallest currency unit)',
+							},
+						],
+					},
+				],
+				displayOptions: {
+					show: {
+						operation: ['sendInvoice'],
+						resource: ['payment'],
+					},
+				},
+				description: 'A JSON-serialized list of price objects, where each object contains "label" and "amount" keys',
+			},
+
+
+			{
+				displayName: 'Photo Url',
+				name: 'photoUrl',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['sendInvoice'],
+						resource: ['payment'],
+					},
+				},
+				description: 'URL of the product image to include with the invoice for a visual reference of the purchased item',
+			},
+
 		],
 	};
 
@@ -1565,63 +1735,90 @@ export class BaleMessenger implements INodeType {
 					});
 
 				}
-			}
-			else if (resource === 'chat')
-			{
+			} else if (resource === 'chat') {
 				const chatId = this.getNodeParameter('chatId', i) as string;
-				if (operation === 'getChat'){
-					const res = await  bot.getChat(chatId)
+				if (operation === 'getChat') {
+					const res = await bot.getChat(chatId);
 					returnData.push({
-							json: {
-								...res,
-							},
-							binary: {},
-							pairedItem: {item: i},
-						});
-				}
-				else if (operation === 'leaveChat'){
-					const res = await  bot.leaveChat(chatId)
+						json: {
+							...res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				} else if (operation === 'leaveChat') {
+					const res = await bot.leaveChat(chatId);
 					returnData.push({
-							json: {
-								leaved: res,
-							},
-							binary: {},
-							pairedItem: {item: i},
-						});
-				}
-				else if (operation === 'getChatMemberCount'){
+						json: {
+							leaved: res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				} else if (operation === 'getChatMemberCount') {
 					const res = await bot.getChatMemberCount(chatId);
 					returnData.push({
-							json: {
-								memberCount: res,
-							},
-							binary: {},
-							pairedItem: {item: i},
-						});
-				}
-				else if (operation === 'banChatMember'){
+						json: {
+							memberCount: res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				} else if (operation === 'banChatMember') {
 					const userId = this.getNodeParameter('userId', i) as number;
 					const res = await bot.banChatMember(chatId, userId);
 					returnData.push({
-							json: {
-								banned: res,
-							},
-							binary: {},
-							pairedItem: {item: i},
-						});
-				}
-				else if (operation === 'unbanChatMember'){
+						json: {
+							banned: res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				} else if (operation === 'unbanChatMember') {
 					const userId = this.getNodeParameter('userId', i) as number;
 					const res = await bot.unbanChatMember(chatId, userId);
 					returnData.push({
-							json: {
-								unbanned: res,
-							},
-							binary: {},
-							pairedItem: {item: i},
-						});
+						json: {
+							unbanned: res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
 				}
 
+			} else if (resource === 'payment') {
+				if (operation === 'sendInvoice') {
+					const chatId = this.getNodeParameter('chatId', i) as string;
+					const title = this.getNodeParameter('title', i) as string;
+					const description = this.getNodeParameter('description', i) as string;
+					const payload = this.getNodeParameter('payload', i) as string;
+					const providerToken = this.getNodeParameter('providerToken', i) as string;
+					const photoUrl = this.getNodeParameter('photoUrl', i) as string;
+					const replyMarkup = getMarkup.call(this, i);
+					// Define the structure for the price item
+
+					// Get the prices fixedCollection parameter
+					const prices = this.getNodeParameter('prices', i) as IDataObject;
+
+					// Extract priceItem array from the fixedCollection
+					const priceItems = prices?.priceItem as LabeledPrice[] || [];
+
+					// Iterate over priceItems with explicit type for 'item'
+					priceItems.forEach((item: LabeledPrice) => {
+						const label = item.label;
+						const amount = item.amount;
+						console.log(`Label: ${label}, Amount: ${amount}`);
+					});
+
+					const res = await sendInvoice(credentials.token as string, chatId, title, description, payload, providerToken, priceItems, photoUrl, replyMarkup)
+					returnData.push({
+						json: {
+							...res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				}
 			}
 		}
 		return this.prepareOutputData(returnData);
