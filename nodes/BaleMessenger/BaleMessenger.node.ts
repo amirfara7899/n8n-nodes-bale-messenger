@@ -437,6 +437,7 @@ export class BaleMessenger implements INodeType {
 							'forwardMessage',
 							'getChat',
 							'leaveChat',
+							'getChatMemberCount',
 						],
 						resource: ['chat', 'message'],
 					},
@@ -1532,6 +1533,16 @@ export class BaleMessenger implements INodeType {
 					returnData.push({
 							json: {
 								leaved: res,
+							},
+							binary: {},
+							pairedItem: {item: i},
+						});
+				}
+				else if (operation === 'getChatMemberCount'){
+					const res = await bot.getChatMemberCount(chatId);
+					returnData.push({
+							json: {
+								memberCount: res,
 							},
 							binary: {},
 							pairedItem: {item: i},
