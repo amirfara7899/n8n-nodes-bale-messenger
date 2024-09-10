@@ -174,6 +174,13 @@ export class BaleMessenger implements INodeType {
 						description: 'Leave a group, supergroup or channel',
 						action: 'Leave a chat',
 					},
+
+					{
+						name: 'Get Chat Member Count',
+						value: 'getChatMemberCount',
+						description: 'Get a chat member count',
+						action: 'Get a chat member count',
+					},
 				],
 				default: 'getChat',
 			},
