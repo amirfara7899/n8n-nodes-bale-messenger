@@ -179,6 +179,10 @@ export class BaleMessenger implements INodeType {
 						name: 'Payment',
 						value: 'payment',
 					},
+					{
+						name: 'Sticker',
+						value: 'sticker',
+					},
 				],
 				default: 'message',
 			},
@@ -426,6 +430,26 @@ export class BaleMessenger implements INodeType {
 				default: 'sendInvoice',
 			},
 
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['sticker'],
+					},
+				},
+				options: [
+					{
+						name: 'Upload Sticker',
+						value: 'uploadSticker',
+						description: 'Upload a sticker file',
+						action: 'Upload a sticker file',
+					},
+				],
+				default: 'uploadSticker',
+			},
 
 			// edit message
 			{
@@ -545,8 +569,8 @@ export class BaleMessenger implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendAnimation', 'sendVoice'],
-						resource: ['message'],
+						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendAnimation', 'sendVoice', 'uploadSticker'],
+						resource: ['message', 'sticker'],
 					},
 				},
 				description: 'Whether the data to upload should be taken from binary field',
@@ -560,8 +584,8 @@ export class BaleMessenger implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVoice', 'sendVideo', 'sendAnimation', 'sendSticker'],
-						resource: ['message'],
+						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVoice', 'sendVideo', 'sendAnimation', 'sendSticker', 'uploadSticker'],
+						resource: ['message', 'sticker'],
 						binaryData: [true],
 					},
 				},
@@ -1267,7 +1291,7 @@ export class BaleMessenger implements INodeType {
 			},
 
 			// -----------------------------------------------
-			//         chat: banChatMember or unbanChatMember
+			//         chat & sticker:  member
 			// -----------------------------------------------
 			{
 				displayName: 'UserId',
@@ -1277,12 +1301,15 @@ export class BaleMessenger implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						operation: ['banChatMember', 'unbanChatMember'],
-						resource: ['chat'],
+						operation: ['banChatMember', 'unbanChatMember', 'uploadSticker'],
+						resource: ['chat', 'sticker'],
 					},
-				},
-				description: 'Ban a Member from a chat',
+				}
 			},
+
+			// -----------------------------------------------
+			//         chat:  member
+			// -----------------------------------------------
 			{
 				displayName: 'Only If Banned',
 				name: 'onlyIfBanned',
@@ -1811,6 +1838,23 @@ export class BaleMessenger implements INodeType {
 					});
 
 					const res = await sendInvoice(credentials.token as string, chatId, title, description, payload, providerToken, priceItems, photoUrl, replyMarkup)
+					returnData.push({
+						json: {
+							...res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				}
+			}
+			else if (resource === 'sticker'){
+				if (operation === 'uploadSticker'){
+					const userId = this.getNodeParameter('userId', i) as number;
+					let uploadData = undefined;
+					const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
+					const itemBinaryData = items[i].binary![binaryPropertyName];
+					uploadData = Buffer.from(itemBinaryData.data, BINARY_ENCODING);
+					const res = await bot.uploadStickerFile(userId, uploadData)
 					returnData.push({
 						json: {
 							...res,
