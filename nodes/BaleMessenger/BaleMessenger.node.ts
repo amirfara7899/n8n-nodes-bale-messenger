@@ -8,6 +8,7 @@ import {
 import axios from 'axios';
 import {BINARY_ENCODING, IExecuteFunctions} from 'n8n-core';
 import {default as TelegramBot, InlineQueryResult} from 'node-telegram-bot-api';
+import {Stream} from "stream";
 
 const BALE_API_URL = `https://tapi.bale.ai/bot`;
 
@@ -150,6 +151,46 @@ async function getChatMembersCount(token: string, chatId: string) {
     }
 }
 
+async function createNewStickerSet(token: string, userId: number, name: string, title: string, sticker: string | Stream | Buffer) {
+	const data: Record<string, any> = {
+		user_id: userId,
+		name : name,
+		title : title,
+		sticker : sticker,
+	};
+	const url = `${BALE_API_URL}${token}/createNewStickerSet`;
+	try {
+		const response = await axios.post(url, data, {
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		});
+		return response.data;
+	} catch (error) {
+		console.error('Failed to create new sticker set:', error.response ? error.response.data : error.message);
+		throw error;
+	}
+}
+
+async function addStickerToSet(token: string, userId: number, name: string, sticker: string | Stream | Buffer) {
+	const data: Record<string, any> = {
+		user_id: userId,
+		name : name,
+		sticker : sticker,
+	};
+	const url = `${BALE_API_URL}${token}/createNewStickerSet`;
+	try {
+		const response = await axios.post(url, data, {
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		});
+		return response.data;
+	} catch (error) {
+		console.error('Failed to add new sticker to set:', error.response ? error.response.data : error.message);
+		throw error;
+	}
+}
 
 export class BaleMessenger implements INodeType {
 	description: INodeTypeDescription = {
@@ -466,6 +507,20 @@ export class BaleMessenger implements INodeType {
 						description: 'Upload a sticker file',
 						action: 'Upload a sticker file',
 					},
+
+					{
+						name: 'Create New Sticker Set',
+						value: 'createNewStickerSet',
+						description: 'Create a new sticker set',
+						action: 'Create a new sticker set',
+					},
+
+					{
+						name: 'Add Sticker To Set',
+						value: 'addStickerToSet',
+						description: 'Add a sticker to an existing sticker set',
+						action: 'Add a sticker to an existing sticker set',
+					},
 				],
 				default: 'uploadSticker',
 			},
@@ -588,7 +643,17 @@ export class BaleMessenger implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVideo', 'sendAnimation', 'sendVoice', 'uploadSticker'],
+						operation: [
+							'sendDocument',
+							'sendPhoto',
+							'sendAudio',
+							'sendVideo',
+							'sendAnimation',
+							'sendVoice',
+							'uploadSticker',
+							'createNewStickerSet',
+							'addStickerToSet',
+						],
 						resource: ['message', 'sticker'],
 					},
 				},
@@ -603,7 +668,18 @@ export class BaleMessenger implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVoice', 'sendVideo', 'sendAnimation', 'sendSticker', 'uploadSticker'],
+						operation: [
+							'sendDocument',
+							'sendPhoto',
+							'sendAudio',
+							'sendVoice',
+							'sendVideo',
+							'sendAnimation',
+							'sendSticker',
+							'uploadSticker',
+							'createNewStickerSet',
+							'addStickerToSet',
+						],
 						resource: ['message', 'sticker'],
 						binaryData: [true],
 					},
@@ -1320,7 +1396,13 @@ export class BaleMessenger implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						operation: ['banChatMember', 'unbanChatMember', 'uploadSticker'],
+						operation: [
+							'banChatMember',
+							'unbanChatMember',
+							'uploadSticker',
+							'createNewStickerSet',
+							'addStickerToSet',
+						],
 						resource: ['chat', 'sticker'],
 					},
 				}
@@ -1458,6 +1540,38 @@ export class BaleMessenger implements INodeType {
 				description: 'URL of the product image to include with the invoice for a visual reference of the purchased item',
 			},
 
+			// -----------------------------------------------
+			//         sticker: createNewStickerSet & addStickerToSet
+			// -----------------------------------------------
+
+			{
+				displayName: 'Name',
+				name: 'name',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['createNewStickerSet', 'addStickerToSet'],
+						resource: ['sticker'],
+					},
+				},
+			},
+
+			{
+				displayName: 'Title',
+				name: 'title',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['createNewStickerSet'],
+						resource: ['sticker'],
+					},
+				},
+				description: 'Set a title for new sticker set',
+			},
+
+
 		],
 	};
 
@@ -1508,7 +1622,8 @@ export class BaleMessenger implements INodeType {
 						pairedItem: {item: i},
 					});
 				}
-			} else if (resource === 'callback') {
+			}
+			else if (resource === 'callback') {
 				if (operation === 'answerQuery') {
 					// ----------------------------------
 					//         callback:answerQuery
@@ -1596,7 +1711,8 @@ export class BaleMessenger implements INodeType {
 					}
 				}
 
-			} else if (resource === 'message') {
+			}
+			else if (resource === 'message') {
 				const chatId = this.getNodeParameter('chatId', i) as string;
 
 				if (operation === 'sendMessage') {
@@ -1781,7 +1897,8 @@ export class BaleMessenger implements INodeType {
 					});
 
 				}
-			} else if (resource === 'chat') {
+			}
+			else if (resource === 'chat') {
 				const chatId = this.getNodeParameter('chatId', i) as string;
 				if (operation === 'getChat') {
 					const res = await bot.getChat(chatId);
@@ -1832,7 +1949,8 @@ export class BaleMessenger implements INodeType {
 					});
 				}
 
-			} else if (resource === 'payment') {
+			}
+			else if (resource === 'payment') {
 				if (operation === 'sendInvoice') {
 					const chatId = this.getNodeParameter('chatId', i) as string;
 					const title = this.getNodeParameter('title', i) as string;
@@ -1874,6 +1992,44 @@ export class BaleMessenger implements INodeType {
 					const itemBinaryData = items[i].binary![binaryPropertyName];
 					uploadData = Buffer.from(itemBinaryData.data, BINARY_ENCODING);
 					const res = await bot.uploadStickerFile(userId, uploadData)
+					returnData.push({
+						json: {
+							...res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				}
+				else if (operation === 'createNewStickerSet'){
+					const userId = this.getNodeParameter('userId', i) as number;
+					const name = this.getNodeParameter('name', i) as string;
+					const title = this.getNodeParameter('title', i) as string;
+
+					let uploadData = undefined;
+					const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
+					const itemBinaryData = items[i].binary![binaryPropertyName];
+					uploadData = Buffer.from(itemBinaryData.data, BINARY_ENCODING);
+
+					const res = await createNewStickerSet(credentials.token as string, userId, name, title, uploadData)
+					returnData.push({
+						json: {
+							...res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+
+				}
+				else if (operation === 'addStickerToSet'){
+					const userId = this.getNodeParameter('userId', i) as number;
+					const name = this.getNodeParameter('name', i) as string;
+
+					let uploadData = undefined;
+					const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
+					const itemBinaryData = items[i].binary![binaryPropertyName];
+					uploadData = Buffer.from(itemBinaryData.data, BINARY_ENCODING);
+
+					const res = await addStickerToSet(credentials.token as string, userId, name, uploadData)
 					returnData.push({
 						json: {
 							...res,
