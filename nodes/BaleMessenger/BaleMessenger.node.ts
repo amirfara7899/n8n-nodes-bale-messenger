@@ -232,6 +232,10 @@ export class BaleMessenger implements INodeType {
 						value: 'chat',
 					},
 					{
+						name: 'File',
+						value: 'file',
+					},
+					{
 						name: 'Message',
 						value: 'message',
 					},
@@ -524,6 +528,30 @@ export class BaleMessenger implements INodeType {
 				],
 				default: 'uploadSticker',
 			},
+
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['file'],
+					},
+				},
+				options: [
+					{
+						name: 'Get File',
+						value: 'getFile',
+						description: 'Retrieve file information by file ID',
+						action: 'Retrieve file information by file ID',
+					},
+
+				],
+				default: 'getFile',
+			},
+
+
 
 			// edit message
 			{
@@ -1571,6 +1599,26 @@ export class BaleMessenger implements INodeType {
 				description: 'Set a title for new sticker set',
 			},
 
+			// -----------------------------------------------
+			//         file: getFile
+			// -----------------------------------------------
+
+			{
+				displayName: 'File ID',
+				name: 'fileId',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: {
+						show: {
+								operation: [
+										'getFile',
+								],
+								resource: ['file'],
+						},
+				},
+				description: 'Pass a file_id to get a file details that exists on the Bale servers',
+			},
 
 		],
 	};
@@ -2030,6 +2078,19 @@ export class BaleMessenger implements INodeType {
 					uploadData = Buffer.from(itemBinaryData.data, BINARY_ENCODING);
 
 					const res = await addStickerToSet(credentials.token as string, userId, name, uploadData)
+					returnData.push({
+						json: {
+							...res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				}
+			}
+			else if (resource === 'file'){
+				if (operation === 'getFile'){
+					const fileId = this.getNodeParameter('fileId', 0) as string
+					const res = await bot.getFile(fileId)
 					returnData.push({
 						json: {
 							...res,
