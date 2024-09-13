@@ -678,11 +678,8 @@ export class BaleMessenger implements INodeType {
 							'sendVideo',
 							'sendAnimation',
 							'sendVoice',
-							'uploadSticker',
-							'createNewStickerSet',
-							'addStickerToSet',
 						],
-						resource: ['message', 'sticker'],
+						resource: ['message'],
 					},
 				},
 				description: 'Whether the data to upload should be taken from binary field',
@@ -704,11 +701,8 @@ export class BaleMessenger implements INodeType {
 							'sendVideo',
 							'sendAnimation',
 							'sendSticker',
-							'uploadSticker',
-							'createNewStickerSet',
-							'addStickerToSet',
 						],
-						resource: ['message', 'sticker'],
+						resource: ['message'],
 						binaryData: [true],
 					},
 				},
@@ -723,8 +717,15 @@ export class BaleMessenger implements INodeType {
 				default: '',
 				displayOptions: {
 					show: {
-						operation: ['sendDocument', 'sendPhoto', 'sendAudio', 'sendVoice', 'sendVideo', 'sendAnimation'],
-						resource: ['message'],
+						operation: [
+							'sendDocument',
+							'sendPhoto',
+							'sendAudio',
+							'sendVoice',
+							'sendVideo',
+							'sendAnimation',
+						],
+						resource: ['message', 'file'],
 						binaryData: [false],
 					},
 				},
@@ -1597,6 +1598,26 @@ export class BaleMessenger implements INodeType {
 					},
 				},
 				description: 'Set a title for new sticker set',
+			},
+
+			{
+				displayName: 'Binary Property',
+				name: 'binaryPropertyName',
+				type: 'string',
+				default: 'data',
+				required: true,
+				displayOptions: {
+					show: {
+						operation: [
+							'uploadSticker',
+							'createNewStickerSet',
+							'addStickerToSet',
+						],
+						resource: ['sticker'],
+					},
+				},
+				placeholder: '',
+				description: 'Name of the binary property that contains the data to upload',
 			},
 
 			// -----------------------------------------------
