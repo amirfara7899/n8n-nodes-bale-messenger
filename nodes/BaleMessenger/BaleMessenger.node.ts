@@ -132,6 +132,25 @@ async function sendInvoice(token: string, chatId: string, title: string, descrip
 	}
 }
 
+async function getChatMembersCount(token: string, chatId: string) {
+    const url = `${BALE_API_URL}${token}/getChatMembersCount`;
+    try {
+        const response = await axios.get(url, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            params: {
+                chat_id: chatId
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Failed to get chat members count:', error.response ? error.response.data : error.message);
+        throw error;
+    }
+}
+
+
 export class BaleMessenger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'BaleMessenger',
@@ -214,10 +233,10 @@ export class BaleMessenger implements INodeType {
 					},
 
 					{
-						name: 'Get Chat Member Count',
-						value: 'getChatMemberCount',
-						description: 'Get a chat member count',
-						action: 'Get a chat member count',
+						name: 'Get Chat Members Count',
+						value: 'getChatMembersCount',
+						description: 'Get a chat members count',
+						action: 'Get a chat members count',
 					},
 
 					{
@@ -531,7 +550,7 @@ export class BaleMessenger implements INodeType {
 							'forwardMessage',
 							'getChat',
 							'leaveChat',
-							'getChatMemberCount',
+							'getChatMembersCount',
 							'sendInvoice',
 							'banChatMember',
 							'unbanChatMember',
@@ -1782,8 +1801,8 @@ export class BaleMessenger implements INodeType {
 						binary: {},
 						pairedItem: {item: i},
 					});
-				} else if (operation === 'getChatMemberCount') {
-					const res = await bot.getChatMemberCount(chatId);
+				} else if (operation === 'getChatMembersCount') {
+					const res = await getChatMembersCount(credentials.token as string, chatId)
 					returnData.push({
 						json: {
 							memberCount: res,
