@@ -293,11 +293,19 @@ export class BaleMessenger implements INodeType {
 					},
 
 					{
+						name: 'Set Chat Photo',
+						value: 'setChatPhoto',
+						description: 'Set a new profile photo for the group, supergroup, or channel',
+						action: 'Set a chat photo',
+					},
+
+					{
 						name: 'Unban Chat Member',
 						value: 'unbanChatMember',
 						description: 'Unban a member from the chat',
 						action: 'Unban a member from the chat',
 					},
+
 				],
 				default: 'getChat',
 			},
@@ -638,6 +646,7 @@ export class BaleMessenger implements INodeType {
 							'sendInvoice',
 							'banChatMember',
 							'unbanChatMember',
+							'setChatPhoto',
 						],
 						resource: ['chat', 'message', 'payment'],
 					},
@@ -1643,6 +1652,28 @@ export class BaleMessenger implements INodeType {
 				description: 'Pass a file_id to get a file details that exists on the Bale servers',
 			},
 
+
+			// -----------------------------------------------
+			//         chat: setChatPhoto
+			// -----------------------------------------------
+			{
+				displayName: 'Binary Property',
+				name: 'binaryPropertyName',
+				type: 'string',
+				default: 'data',
+				required: true,
+				displayOptions: {
+					show: {
+						operation: [
+							'setChatPhoto',
+						],
+						resource: ['chat'],
+					},
+				},
+				placeholder: '',
+				description: 'Name of the binary property that contains photo for setting on chat',
+			},
+
 		],
 	};
 
@@ -2008,12 +2039,27 @@ export class BaleMessenger implements INodeType {
 						binary: {},
 						pairedItem: {item: i},
 					});
-				} else if (operation === 'unbanChatMember') {
+				}
+				else if (operation === 'unbanChatMember') {
 					const userId = this.getNodeParameter('userId', i) as number;
 					const res = await bot.unbanChatMember(chatId, userId);
 					returnData.push({
 						json: {
 							unbanned: res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
+				}
+				else if (operation === 'setChatPhoto'){
+					let uploadData = undefined;
+					const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
+					const itemBinaryData = items[i].binary![binaryPropertyName];
+					uploadData = Buffer.from(itemBinaryData.data, BINARY_ENCODING);
+					const res = await bot.setChatPhoto(chatId, uploadData);
+					returnData.push({
+						json: {
+							set: res,
 						},
 						binary: {},
 						pairedItem: {item: i},
