@@ -107,7 +107,7 @@ async function sendContact(token: string, chat_id: string, phone_number: string,
 }
 
 async function sendInvoice(token: string, chatId: string, title: string, description: string, payload: string, providerToken: string,
-													 prices: LabeledPrice[], photoUrl?: string, replyMarkup?: any) {
+													 prices: LabeledPrice[], photoUrl?: string, replyToMessageId?: number , replyMarkup?: any) {
 	const data: Record<string, any> = {
 		chat_id: chatId,
 		title: title,
@@ -116,6 +116,7 @@ async function sendInvoice(token: string, chatId: string, title: string, descrip
 		provider_token: providerToken,
 		prices: prices,
 		photo_url: photoUrl,
+		reply_to_message_id: replyToMessageId,
 		reply_markup: replyMarkup
 	};
 	const url = `${BALE_API_URL}${token}/sendInvoice`;
@@ -965,8 +966,9 @@ export class BaleMessenger implements INodeType {
 							'sendMediaGroup',
 							'sendSticker',
 							'sendContact',
+							'sendInvoice'
 						],
-						resource: ['chat', 'message'],
+						resource: ['chat', 'message', 'payment'],
 					},
 				},
 				default: 0,
@@ -2027,6 +2029,7 @@ export class BaleMessenger implements INodeType {
 					const payload = this.getNodeParameter('payload', i) as string;
 					const providerToken = this.getNodeParameter('providerToken', i) as string;
 					const photoUrl = this.getNodeParameter('photoUrl', i) as string;
+					const replyToMessageId = this.getNodeParameter('replyToMessageId', i) as number;
 					const replyMarkup = getMarkup.call(this, i);
 					// Define the structure for the price item
 
@@ -2043,7 +2046,7 @@ export class BaleMessenger implements INodeType {
 						console.log(`Label: ${label}, Amount: ${amount}`);
 					});
 
-					const res = await sendInvoice(credentials.token as string, chatId, title, description, payload, providerToken, priceItems, photoUrl, replyMarkup)
+					const res = await sendInvoice(credentials.token as string, chatId, title, description, payload, providerToken, priceItems, photoUrl, replyToMessageId, replyMarkup)
 					returnData.push({
 						json: {
 							...res,
