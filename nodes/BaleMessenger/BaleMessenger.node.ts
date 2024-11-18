@@ -1038,9 +1038,9 @@ export class BaleMessenger implements INodeType {
 						action: 'Record video',
 					},
 					{
-						name: 'Record Video Note',
-						value: 'record_video_note',
-						action: 'Record video note',
+						name: 'Record Voice',
+						value: 'record_voice',
+						action: 'Record voice',
 					},
 					{
 						name: 'Typing',
@@ -1068,9 +1068,9 @@ export class BaleMessenger implements INodeType {
 						action: 'Upload video',
 					},
 					{
-						name: 'Upload Video Note',
-						value: 'upload_video_note',
-						action: 'Upload video note',
+						name: 'Upload Voice',
+						value: 'upload_voice',
+						action: 'Upload voice',
 					},
 				],
 				default: 'typing',
