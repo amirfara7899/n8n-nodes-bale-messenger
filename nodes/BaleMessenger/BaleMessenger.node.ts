@@ -82,14 +82,14 @@ async function answerCallbackQuery(token: string, callbackQueryId: string, text?
 }
 
 async function sendContact(token: string, chat_id: string, phone_number: string, first_name: string,
-													 last_name?: string, replyToMessageId?: number, reply_markup?: any) {
+													 last_name?: string, replyToMessageId?: number) {
 	const data: Record<string, any> = {
 		chat_id: chat_id,
 		phone_number: phone_number,
 		first_name: first_name,
 		last_name: last_name,
 		reply_to_message_id: replyToMessageId,
-		reply_markup: reply_markup
+		reply_markup: true
 	};
 	const url = `${BALE_API_URL}${token}/sendContact`;
 	try {
@@ -1986,10 +1986,9 @@ export class BaleMessenger implements INodeType {
 					const first_name = this.getNodeParameter('first_name', i) as string;
 					const last_name = this.getNodeParameter('last_name', i) as string;
 					const replyToMessageId = this.getNodeParameter('replyToMessageId', i) as number;
-					const reply_markup = getMarkup.call(this, i);
 
 					const res = await sendContact(credentials.token as string, chatId, phone_number,
-						first_name, last_name, replyToMessageId, reply_markup);
+						first_name, last_name, replyToMessageId);
 					returnData.push({
 						json: {
 							...res,
