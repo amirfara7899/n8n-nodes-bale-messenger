@@ -553,7 +553,7 @@ export class BaleMessenger implements INodeType {
 						name: 'Get File',
 						value: 'getFile',
 						description: 'Retrieve file information by file ID',
-						action: 'Retrieve file information by file ID',
+						action: 'Get a file',
 					},
 
 				],
