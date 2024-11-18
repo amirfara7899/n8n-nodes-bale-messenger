@@ -7,7 +7,7 @@ import {
 } from 'n8n-workflow';
 import axios from 'axios';
 import {BINARY_ENCODING, IExecuteFunctions} from 'n8n-core';
-import {default as TelegramBot, InlineQueryResult} from 'node-telegram-bot-api';
+import {ChatAction, default as TelegramBot, InlineQueryResult} from 'node-telegram-bot-api';
 import {Stream} from "stream";
 
 const BALE_API_URL = `https://tapi.bale.ai/bot`;
@@ -1997,6 +1997,18 @@ export class BaleMessenger implements INodeType {
 						pairedItem: {item: i},
 					});
 
+				} else if (operation == "sendChatAction"){
+
+					const action = this.getNodeParameter('action', i) as string;
+
+					const res = await bot.sendChatAction(chatId, action as ChatAction);
+					returnData.push({
+						json: {
+							successful: res,
+						},
+						binary: {},
+						pairedItem: {item: i},
+					});
 				}
 			}
 			else if (resource === 'chat') {
