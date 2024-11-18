@@ -1026,17 +1026,17 @@ export class BaleMessenger implements INodeType {
 						name: 'Find Location',
 						value: 'find_location',
 						action: 'Find location',
-					},
-					{
-						name: 'Record Audio',
-						value: 'record_audio',
-						action: 'Record audio',
-					},
+					},//TODO should complete
 					{
 						name: 'Record Video',
 						value: 'record_video',
 						action: 'Record video',
 					},
+					// {
+					// 	name: 'Record Video Note',
+					// 	value: 'record_video_note',
+					// 	action: 'Record video note',
+					// },
 					{
 						name: 'Record Voice',
 						value: 'record_voice',
@@ -1048,15 +1048,10 @@ export class BaleMessenger implements INodeType {
 						action: 'Typing a message',
 					},
 					{
-						name: 'Upload Audio',
-						value: 'upload_audio',
-						action: 'Upload audio',
-					},
-					{
 						name: 'Upload Document',
 						value: 'upload_document',
 						action: 'Upload document',
-					},
+					},//TODO should complete
 					{
 						name: 'Upload Photo',
 						value: 'upload_photo',
@@ -1067,6 +1062,11 @@ export class BaleMessenger implements INodeType {
 						value: 'upload_video',
 						action: 'Upload video',
 					},
+					// {
+					// 	name: 'Upload Video Note',
+					// 	value: 'upload_video_note',
+					// 	action: 'Upload video note',
+					// },
 					{
 						name: 'Upload Voice',
 						value: 'upload_voice',
