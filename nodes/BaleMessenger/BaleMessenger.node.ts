@@ -1898,7 +1898,7 @@ export class BaleMessenger implements INodeType {
 					body.text = this.getNodeParameter('text', i) as string;
 					Text = body.text;
 
-					bot.editMessageText(body.text, {
+					await bot.editMessageText(body.text, {
 						chat_id: chat_id,
 						message_id: message_id,
 						reply_markup: getMarkup.call(this, i),
@@ -1970,33 +1970,31 @@ export class BaleMessenger implements INodeType {
 						pairedItem: {item: i},
 					});
 				} else if (['sendDocument', 'sendPhoto', 'sendAudio', 'sendVoice', 'sendVideo', 'sendAnimation'].includes(operation)) {
-					let fileOptions = undefined;
-					let uploadData = undefined
-					const options = {reply_markup: getMarkup.call(this, i)};
-					if (binaryData) {
-						const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
-						const itemBinaryData = items[i].binary![binaryPropertyName];
-						uploadData = Buffer.from(itemBinaryData.data, BINARY_ENCODING);
-						fileOptions = {filename: itemBinaryData.fileName};
-					} else {
-						// file_id passed
-						uploadData = this.getNodeParameter('fileId', 0) as string;
-					}
-					if (operation === 'sendDocument')
-						await bot.sendDocument(chatId, uploadData, options, fileOptions);
-					else if (operation === 'sendPhoto')
-						await bot.sendPhoto(chatId, uploadData, options, fileOptions);
-					else if (operation === 'sendAudio')
-						await bot.sendAudio(chatId, uploadData, options, fileOptions);
-					else if (operation === 'sendVoice')
-						await bot.sendVoice(chatId, uploadData, options, fileOptions);
-					else if (operation === 'sendVideo')
-						await bot.sendVideo(chatId, uploadData, options, fileOptions);
-					else if (operation === 'sendAnimation')
-						await bot.sendAnimation(chatId, uploadData, options)
+						let uploadData = undefined;
 						const caption = this.getNodeParameter('caption', i) as string;
 
 						const options = { caption: caption, reply_markup: getMarkup.call(this, i)};
+
+						if (binaryData) {
+							const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
+							const itemBinaryData = items[i].binary![binaryPropertyName];
+							uploadData = itemBinaryData.fileName as string;
+						} else {
+							// file_id passed
+							uploadData = this.getNodeParameter('fileId', 0) as string;
+						}
+						if (operation === 'sendDocument')
+							await bot.sendDocument(chatId, uploadData, options);
+						else if (operation === 'sendPhoto')
+							await bot.sendPhoto(chatId, uploadData, options);
+						else if (operation === 'sendAudio')
+							await bot.sendAudio(chatId, uploadData, options);
+						else if (operation === 'sendVoice')
+							await bot.sendVoice(chatId, uploadData, options);
+						else if (operation === 'sendVideo')
+							await bot.sendVideo(chatId, uploadData, options);
+						else if (operation === 'sendAnimation')
+							await bot.sendAnimation(chatId, uploadData, options)
 
 				} else if (operation === 'sendMediaGroup') {
 					const mediaItems = this.getNodeParameter('media', i) as IDataObject;
