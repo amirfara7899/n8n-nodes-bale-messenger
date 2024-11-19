@@ -1674,6 +1674,52 @@ export class BaleMessenger implements INodeType {
 				description: 'Name of the binary property that contains photo for setting on chat',
 			},
 
+
+			// -----------------------------------------------
+			//         message:sendAnimation/sendAudio/sendLocation/sendMessage/sendPhoto/sendSticker/sendVideo
+			// -----------------------------------------------
+
+			{
+					displayName: 'Caption',
+					name: 'caption',
+					type: 'string',
+					default: '',
+					displayOptions: {
+						show: {
+							operation: [
+								'sendAnimation',
+								'sendAudio',
+								'sendDocument',
+								'sendPhoto',
+								'sendVideo',
+							],
+							resource: ['message'],
+						},
+					},
+					description: 'Caption text to set, 0-1024 characters',
+			},
+
+			{
+					displayName: 'File Name',
+					name: 'fileName',
+					type: 'string',
+					default: '',
+					displayOptions: {
+						show: {
+							operation: [
+								'sendAnimation',
+								'sendAudio',
+								'sendDocument',
+								'sendPhoto',
+								'sendVideo',
+								'sendSticker',
+							],
+							resource: ['message'],
+							binaryData: [true],
+						},
+					},
+					placeholder: 'image.jpeg',
+			},
 		],
 	};
 
@@ -1948,6 +1994,9 @@ export class BaleMessenger implements INodeType {
 						await bot.sendVideo(chatId, uploadData, options, fileOptions);
 					else if (operation === 'sendAnimation')
 						await bot.sendAnimation(chatId, uploadData, options)
+						const caption = this.getNodeParameter('caption', i) as string;
+
+						const options = { caption: caption, reply_markup: getMarkup.call(this, i)};
 
 				} else if (operation === 'sendMediaGroup') {
 					const mediaItems = this.getNodeParameter('media', i) as IDataObject;
