@@ -11,6 +11,12 @@ import {ChatAction, default as TelegramBot, InlineQueryResult} from 'node-telegr
 import {Stream} from "stream";
 
 const BALE_API_URL = `https://tapi.bale.ai/bot`;
+const axiosInstance = axios.create({
+	maxContentLength: 2 * 1024 * 1024 * 1024, // 2GB
+	headers: {
+		'Content-Type': 'application/json',
+	},
+});
 
 interface LabeledPrice {
 	label: string;
@@ -68,11 +74,7 @@ async function answerCallbackQuery(token: string, callbackQueryId: string, text?
 	console.log('Request Data:', data);
 
 	try {
-		const response = await axios.post(url, data, {
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		});
+		const response = await axiosInstance.post(url, data);
 		console.log('Response from Bale:', response.data);
 		return response.data;
 	} catch (error) {
@@ -93,11 +95,7 @@ async function sendContact(token: string, chat_id: string, phone_number: string,
 	};
 	const url = `${BALE_API_URL}${token}/sendContact`;
 	try {
-		const response = await axios.post(url, data, {
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		});
+		const response = await axiosInstance.post(url, data);
 		console.log('Response from Bale:', response.data);
 		return response.data;
 	} catch (error) {
@@ -107,7 +105,7 @@ async function sendContact(token: string, chat_id: string, phone_number: string,
 }
 
 async function sendInvoice(token: string, chatId: string, title: string, description: string, payload: string, providerToken: string,
-													 prices: LabeledPrice[], photoUrl?: string, replyToMessageId?: number , replyMarkup?: any) {
+													 prices: LabeledPrice[], photoUrl?: string, replyToMessageId?: number, replyMarkup?: any) {
 	const data: Record<string, any> = {
 		chat_id: chatId,
 		title: title,
@@ -121,11 +119,7 @@ async function sendInvoice(token: string, chatId: string, title: string, descrip
 	};
 	const url = `${BALE_API_URL}${token}/sendInvoice`;
 	try {
-		const response = await axios.post(url, data, {
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		});
+		const response = await axiosInstance.post(url, data);
 		console.log('Response from Bale:', response.data);
 		return response.data;
 	} catch (error) {
@@ -135,37 +129,30 @@ async function sendInvoice(token: string, chatId: string, title: string, descrip
 }
 
 async function getChatMembersCount(token: string, chatId: string) {
-    const url = `${BALE_API_URL}${token}/getChatMembersCount`;
-    try {
-        const response = await axios.get(url, {
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            params: {
-                chat_id: chatId
-            }
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Failed to get chat members count:', error.response ? error.response.data : error.message);
-        throw error;
-    }
+	const url = `${BALE_API_URL}${token}/getChatMembersCount`;
+	try {
+		const response = await axiosInstance.get(url, {
+			params: {
+				chat_id: chatId
+			}
+		});
+		return response.data;
+	} catch (error) {
+		console.error('Failed to get chat members count:', error.response ? error.response.data : error.message);
+		throw error;
+	}
 }
 
 async function createNewStickerSet(token: string, userId: number, name: string, title: string, sticker: string | Stream | Buffer) {
 	const data: Record<string, any> = {
 		user_id: userId,
-		name : name,
-		title : title,
-		sticker : sticker,
+		name: name,
+		title: title,
+		sticker: sticker,
 	};
 	const url = `${BALE_API_URL}${token}/createNewStickerSet`;
 	try {
-		const response = await axios.post(url, data, {
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		});
+		const response = await axiosInstance.post(url, data);
 		return response.data;
 	} catch (error) {
 		console.error('Failed to create new sticker set:', error.response ? error.response.data : error.message);
@@ -176,16 +163,12 @@ async function createNewStickerSet(token: string, userId: number, name: string, 
 async function addStickerToSet(token: string, userId: number, name: string, sticker: string | Stream | Buffer) {
 	const data: Record<string, any> = {
 		user_id: userId,
-		name : name,
-		sticker : sticker,
+		name: name,
+		sticker: sticker,
 	};
 	const url = `${BALE_API_URL}${token}/createNewStickerSet`;
 	try {
-		const response = await axios.post(url, data, {
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		});
+		const response = await axiosInstance.post(url, data);
 		return response.data;
 	} catch (error) {
 		console.error('Failed to add new sticker to set:', error.response ? error.response.data : error.message);
@@ -559,7 +542,6 @@ export class BaleMessenger implements INodeType {
 				],
 				default: 'getFile',
 			},
-
 
 
 			// edit message
@@ -1642,12 +1624,12 @@ export class BaleMessenger implements INodeType {
 				default: '',
 				required: true,
 				displayOptions: {
-						show: {
-								operation: [
-										'getFile',
-								],
-								resource: ['file'],
-						},
+					show: {
+						operation: [
+							'getFile',
+						],
+						resource: ['file'],
+					},
 				},
 				description: 'Pass a file_id to get a file details that exists on the Bale servers',
 			},
@@ -1680,46 +1662,46 @@ export class BaleMessenger implements INodeType {
 			// -----------------------------------------------
 
 			{
-					displayName: 'Caption',
-					name: 'caption',
-					type: 'string',
-					default: '',
-					displayOptions: {
-						show: {
-							operation: [
-								'sendAnimation',
-								'sendAudio',
-								'sendDocument',
-								'sendPhoto',
-								'sendVideo',
-								'sendVoice',
-							],
-							resource: ['message'],
-						},
+				displayName: 'Caption',
+				name: 'caption',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: [
+							'sendAnimation',
+							'sendAudio',
+							'sendDocument',
+							'sendPhoto',
+							'sendVideo',
+							'sendVoice',
+						],
+						resource: ['message'],
 					},
-					description: 'Caption text to set, 0-1024 characters',
+				},
+				description: 'Caption text to set, 0-1024 characters',
 			},
 
 			{
-					displayName: 'File Name',
-					name: 'fileName',
-					type: 'string',
-					default: '',
-					displayOptions: {
-						show: {
-							operation: [
-								'sendAnimation',
-								'sendAudio',
-								'sendDocument',
-								'sendPhoto',
-								'sendVideo',
-								'sendSticker',
-							],
-							resource: ['message'],
-							binaryData: [true],
-						},
+				displayName: 'File Name',
+				name: 'fileName',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: [
+							'sendAnimation',
+							'sendAudio',
+							'sendDocument',
+							'sendPhoto',
+							'sendVideo',
+							'sendSticker',
+						],
+						resource: ['message'],
+						binaryData: [true],
 					},
-					placeholder: 'image.jpeg',
+				},
+				placeholder: 'image.jpeg',
 			},
 		],
 	};
@@ -1771,8 +1753,7 @@ export class BaleMessenger implements INodeType {
 						pairedItem: {item: i},
 					});
 				}
-			}
-			else if (resource === 'callback') {
+			} else if (resource === 'callback') {
 				if (operation === 'answerQuery') {
 					// ----------------------------------
 					//         callback:answerQuery
@@ -1860,8 +1841,7 @@ export class BaleMessenger implements INodeType {
 					}
 				}
 
-			}
-			else if (resource === 'message') {
+			} else if (resource === 'message') {
 				const chatId = this.getNodeParameter('chatId', i) as string;
 
 				if (operation === 'sendMessage') {
@@ -1971,31 +1951,31 @@ export class BaleMessenger implements INodeType {
 						pairedItem: {item: i},
 					});
 				} else if (['sendDocument', 'sendPhoto', 'sendAudio', 'sendVoice', 'sendVideo', 'sendAnimation'].includes(operation)) {
-						let uploadData = undefined;
-						const caption = this.getNodeParameter('caption', i) as string;
+					let uploadData = undefined;
+					const caption = this.getNodeParameter('caption', i) as string;
 
-						const options = { caption: caption, reply_markup: getMarkup.call(this, i)};
+					const options = {caption: caption, reply_markup: getMarkup.call(this, i)};
 
-						if (binaryData) {
-							const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
-							const itemBinaryData = items[i].binary![binaryPropertyName];
-							uploadData = itemBinaryData.fileName as string;
-						} else {
-							// file_id passed
-							uploadData = this.getNodeParameter('fileId', 0) as string;
-						}
-						if (operation === 'sendDocument')
-							await bot.sendDocument(chatId, uploadData, options);
-						else if (operation === 'sendPhoto')
-							await bot.sendPhoto(chatId, uploadData, options);
-						else if (operation === 'sendAudio')
-							await bot.sendAudio(chatId, uploadData, options);
-						else if (operation === 'sendVoice')
-							await bot.sendVoice(chatId, uploadData, options);
-						else if (operation === 'sendVideo')
-							await bot.sendVideo(chatId, uploadData, options);
-						else if (operation === 'sendAnimation')
-							await bot.sendAnimation(chatId, uploadData, options)
+					if (binaryData) {
+						const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
+						const itemBinaryData = items[i].binary![binaryPropertyName];
+						uploadData = itemBinaryData.fileName as string;
+					} else {
+						// file_id passed
+						uploadData = this.getNodeParameter('fileId', 0) as string;
+					}
+					if (operation === 'sendDocument')
+						await bot.sendDocument(chatId, uploadData, options);
+					else if (operation === 'sendPhoto')
+						await bot.sendPhoto(chatId, uploadData, options);
+					else if (operation === 'sendAudio')
+						await bot.sendAudio(chatId, uploadData, options);
+					else if (operation === 'sendVoice')
+						await bot.sendVoice(chatId, uploadData, options);
+					else if (operation === 'sendVideo')
+						await bot.sendVideo(chatId, uploadData, options);
+					else if (operation === 'sendAnimation')
+						await bot.sendAnimation(chatId, uploadData, options)
 
 				} else if (operation === 'sendMediaGroup') {
 					const mediaItems = this.getNodeParameter('media', i) as IDataObject;
@@ -2045,7 +2025,7 @@ export class BaleMessenger implements INodeType {
 						pairedItem: {item: i},
 					});
 
-				} else if (operation == "sendChatAction"){
+				} else if (operation == "sendChatAction") {
 
 					const action = this.getNodeParameter('action', i) as string;
 
@@ -2058,8 +2038,7 @@ export class BaleMessenger implements INodeType {
 						pairedItem: {item: i},
 					});
 				}
-			}
-			else if (resource === 'chat') {
+			} else if (resource === 'chat') {
 				const chatId = this.getNodeParameter('chatId', i) as string;
 				if (operation === 'getChat') {
 					const res = await bot.getChat(chatId);
@@ -2098,8 +2077,7 @@ export class BaleMessenger implements INodeType {
 						binary: {},
 						pairedItem: {item: i},
 					});
-				}
-				else if (operation === 'unbanChatMember') {
+				} else if (operation === 'unbanChatMember') {
 					const userId = this.getNodeParameter('userId', i) as number;
 					const res = await bot.unbanChatMember(chatId, userId);
 					returnData.push({
@@ -2109,8 +2087,7 @@ export class BaleMessenger implements INodeType {
 						binary: {},
 						pairedItem: {item: i},
 					});
-				}
-				else if (operation === 'setChatPhoto'){
+				} else if (operation === 'setChatPhoto') {
 					let uploadData = undefined;
 					const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
 					const itemBinaryData = items[i].binary![binaryPropertyName];
@@ -2125,8 +2102,7 @@ export class BaleMessenger implements INodeType {
 					});
 				}
 
-			}
-			else if (resource === 'payment') {
+			} else if (resource === 'payment') {
 				if (operation === 'sendInvoice') {
 					const chatId = this.getNodeParameter('chatId', i) as string;
 					const title = this.getNodeParameter('title', i) as string;
@@ -2160,9 +2136,8 @@ export class BaleMessenger implements INodeType {
 						pairedItem: {item: i},
 					});
 				}
-			}
-			else if (resource === 'sticker'){
-				if (operation === 'uploadSticker'){
+			} else if (resource === 'sticker') {
+				if (operation === 'uploadSticker') {
 					const userId = this.getNodeParameter('userId', i) as number;
 					let uploadData = undefined;
 					const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
@@ -2176,8 +2151,7 @@ export class BaleMessenger implements INodeType {
 						binary: {},
 						pairedItem: {item: i},
 					});
-				}
-				else if (operation === 'createNewStickerSet'){
+				} else if (operation === 'createNewStickerSet') {
 					const userId = this.getNodeParameter('userId', i) as number;
 					const name = this.getNodeParameter('name', i) as string;
 					const title = this.getNodeParameter('title', i) as string;
@@ -2196,8 +2170,7 @@ export class BaleMessenger implements INodeType {
 						pairedItem: {item: i},
 					});
 
-				}
-				else if (operation === 'addStickerToSet'){
+				} else if (operation === 'addStickerToSet') {
 					const userId = this.getNodeParameter('userId', i) as number;
 					const name = this.getNodeParameter('name', i) as string;
 
@@ -2215,9 +2188,8 @@ export class BaleMessenger implements INodeType {
 						pairedItem: {item: i},
 					});
 				}
-			}
-			else if (resource === 'file'){
-				if (operation === 'getFile'){
+			} else if (resource === 'file') {
+				if (operation === 'getFile') {
 					const fileId = this.getNodeParameter('fileId', 0) as string
 					const res = await bot.getFile(fileId)
 					returnData.push({

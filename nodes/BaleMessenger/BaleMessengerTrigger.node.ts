@@ -154,13 +154,19 @@ export class BaleMessengerTrigger implements INodeType {
 			}
 
 			try {
+				const axiosInstance = axios.create({
+						maxContentLength: 2 * 1024 * 1024 * 1024, // 2GB
+						headers: {
+								'Content-Type': 'application/json',
+						},
+				});
 				// First Axios request to get file_path
-				const fileResponse = await axios.get(
+				const fileResponse = await axiosInstance.get(
 					`${BALE_API_URL}/bot${token}/getFile?file_id=${fileId}`
 				);
 				const file_path = fileResponse.data.result.file_path;
 				// Second Axios request to get the file
-				const file = await axios.get(
+				const file = await axiosInstance.get(
 					`${BALE_API_URL}/file/bot${token}/${file_path}`,
 					{
 						responseType: 'arraybuffer',
