@@ -1692,6 +1692,7 @@ export class BaleMessenger implements INodeType {
 								'sendDocument',
 								'sendPhoto',
 								'sendVideo',
+								'sendVoice',
 							],
 							resource: ['message'],
 						},
