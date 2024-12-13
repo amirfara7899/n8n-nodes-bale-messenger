@@ -6,6 +6,7 @@ import {
 	// NodeOperationError,
 } from 'n8n-workflow';
 import axios from 'axios';
+import FormData from 'form-data';
 import {BINARY_ENCODING, IExecuteFunctions} from 'n8n-core';
 import {ChatAction, default as TelegramBot, InlineQueryResult} from 'node-telegram-bot-api';
 import {Stream} from "stream";
@@ -175,6 +176,34 @@ async function addStickerToSet(token: string, userId: number, name: string, stic
 		throw error;
 	}
 }
+
+async function setChatPhoto(token: string, chatId: string, photo: Buffer) {
+    const url = `${BALE_API_URL}${token}/setChatPhoto`;
+
+    try {
+        // Create FormData for the request
+        const formData = new FormData();
+        formData.append('chat_id', chatId);
+        formData.append('photo', photo, {
+            filename: 'chat_photo.jpg', // Ensure you provide a filename
+            contentType: 'image/jpeg', // Set appropriate MIME type
+        });
+
+        // Send request using axios
+        const response = await axios.post(url, formData, {
+            headers: {
+                ...formData.getHeaders(), // Get headers for multipart/form-data
+            },
+        });
+
+        console.log('Chat photo set successfully:', response.data);
+        return response.data;
+    } catch (error: any) {
+        console.error('Failed to set chat photo:', error.response ? error.response.data : error.message);
+        throw error;
+    }
+}
+
 
 export class BaleMessenger implements INodeType {
 	description: INodeTypeDescription = {
@@ -2092,7 +2121,11 @@ export class BaleMessenger implements INodeType {
 					const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
 					const itemBinaryData = items[i].binary![binaryPropertyName];
 					uploadData = Buffer.from(itemBinaryData.data, BINARY_ENCODING);
-					const res = await bot.setChatPhoto(chatId, uploadData);
+					// const res = await bot.setChatPhoto(chatId, uploadData, {
+          //   filename: itemBinaryData.fileName || 'photo.jpg', // Explicitly set a filename
+          //   contentType: 'image/jpeg', // Ensure MIME type is valid
+        	// });
+					const res = await setChatPhoto(credentials.token as string, chatId, uploadData)
 					returnData.push({
 						json: {
 							set: res,
